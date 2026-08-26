@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import Card from "./Card";
 import Avatar from "./Avatar";
 import { db } from "../firebase";
-import { doc, updateDoc, getDoc, Timestamp, serverTimestamp, addDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, getDoc, Timestamp, serverTimestamp, addDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 
 const GRADES = [
   "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
@@ -101,13 +101,18 @@ export function hasActiveSubscription(student) {
   return info.status === "active" || info.status === "expiring_soon";
 }
 
-export default function StudentCard({ student, onUpdateSuccess, viewMode = "card" }) {
+export default function StudentCard({ student, onUpdateSuccess, onDeleteSuccess, viewMode = "card" }) {
   const { id, fullName, email, phone, grade, photoURL, isSubscribed } = student;
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [fetchingEdit, setFetchingEdit] = useState(false);
+
+  // Permanent Delete Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDeleteCheck, setConfirmDeleteCheck] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: student.fullName || "",
     email: student.email || "",
@@ -268,6 +273,87 @@ export default function StudentCard({ student, onUpdateSuccess, viewMode = "card
     }
   };
 
+  const handlePermanentDeleteStudent = async () => {
+    if (!confirmDeleteCheck) {
+      alert("يرجى التأكيد عبر تحديد مربع الإقرار بالموافقة على الحذف النهائي.");
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      const studentId = id;
+
+      // 1. Fetch related quiz submissions
+      const qSubs1 = query(collection(db, "quiz_submissions"), where("studentUid", "==", studentId));
+      const qSubs2 = query(collection(db, "quiz_submissions"), where("studentId", "==", studentId));
+
+      // 2. Fetch related student activities
+      const qAct1 = query(collection(db, "student_activities"), where("studentUid", "==", studentId));
+      const qAct2 = query(collection(db, "student_activities"), where("studentId", "==", studentId));
+
+      // 3. Fetch financial transactions
+      const qFin = query(collection(db, "financial_transactions"), where("studentId", "==", studentId));
+
+      // 4. Fetch support tickets
+      const qTix1 = query(collection(db, "support_tickets"), where("studentId", "==", studentId));
+      const qTix2 = query(collection(db, "support_tickets"), where("userId", "==", studentId));
+
+      const [
+        snapSubs1,
+        snapSubs2,
+        snapAct1,
+        snapAct2,
+        snapFin,
+        snapTix1,
+        snapTix2,
+      ] = await Promise.all([
+        getDocs(qSubs1).catch(() => ({ docs: [] })),
+        getDocs(qSubs2).catch(() => ({ docs: [] })),
+        getDocs(qAct1).catch(() => ({ docs: [] })),
+        getDocs(qAct2).catch(() => ({ docs: [] })),
+        getDocs(qFin).catch(() => ({ docs: [] })),
+        getDocs(qTix1).catch(() => ({ docs: [] })),
+        getDocs(qTix2).catch(() => ({ docs: [] })),
+      ]);
+
+      const subDocIds = new Set([...snapSubs1.docs.map((d) => d.id), ...snapSubs2.docs.map((d) => d.id)]);
+      const actDocIds = new Set([...snapAct1.docs.map((d) => d.id), ...snapAct2.docs.map((d) => d.id)]);
+      const tixDocIds = new Set([...snapTix1.docs.map((d) => d.id), ...snapTix2.docs.map((d) => d.id)]);
+
+      const deleteTasks = [];
+
+      // Delete sub-collections & related records
+      subDocIds.forEach((docId) => {
+        deleteTasks.push(deleteDoc(doc(db, "quiz_submissions", docId)));
+      });
+      actDocIds.forEach((docId) => {
+        deleteTasks.push(deleteDoc(doc(db, "student_activities", docId)));
+      });
+      snapFin.docs.forEach((d) => {
+        deleteTasks.push(deleteDoc(doc(db, "financial_transactions", d.id)));
+      });
+      tixDocIds.forEach((docId) => {
+        deleteTasks.push(deleteDoc(doc(db, "support_tickets", docId)));
+      });
+
+      // Delete main user profile document from users collection
+      deleteTasks.push(deleteDoc(doc(db, "users", studentId)));
+
+      await Promise.all(deleteTasks);
+
+      setShowDeleteModal(false);
+      setConfirmDeleteCheck(false);
+      if (onDeleteSuccess) {
+        onDeleteSuccess(studentId);
+      }
+    } catch (err) {
+      console.error("Error permanently deleting student:", err);
+      alert("حدث خطأ أثناء محاولة حذف الطالب وقاعدة بياناته: " + (err.message || err));
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const openEditModal = async () => {
     setFetchingEdit(true);
     setShowEditModal(true);
@@ -414,6 +500,22 @@ export default function StudentCard({ student, onUpdateSuccess, viewMode = "card
               >
                 📜 سجل مالي
               </button>
+              <button
+                onClick={() => { setConfirmDeleteCheck(false); setShowDeleteModal(true); }}
+                disabled={loading || deleteLoading}
+                className="button button-sm button-muted"
+                style={{
+                  fontSize: "0.78rem",
+                  padding: "0.35rem 0.55rem",
+                  color: "#ef4444",
+                  background: "rgba(239, 68, 68, 0.08)",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  transition: "all 0.2s ease",
+                }}
+                title="حذف الطالب نهائياً من قاعدة البيانات"
+              >
+                🗑️ حذف نهائي
+              </button>
             </div>
           </td>
         </tr>
@@ -518,6 +620,23 @@ export default function StudentCard({ student, onUpdateSuccess, viewMode = "card
                 🚫 إلغاء
               </button>
             )}
+
+            <button
+              onClick={() => { setConfirmDeleteCheck(false); setShowDeleteModal(true); }}
+              disabled={loading || deleteLoading}
+              className="button button-sm button-muted"
+              style={{
+                fontSize: "0.78rem",
+                padding: "0.35rem 0.55rem",
+                color: "#ef4444",
+                background: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                transition: "all 0.2s ease",
+              }}
+              title="حذف الطالب نهائياً من قاعدة البيانات"
+            >
+              🗑️ حذف نهائي
+            </button>
           </div>
         </Card>
       )}
@@ -1220,6 +1339,201 @@ export default function StudentCard({ student, onUpdateSuccess, viewMode = "card
                 }}
               >
                 ↩️ إلغاء والعودة
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 🗑️ Permanent Student Deletion Confirmation Modal */}
+      {showDeleteModal && createPortal(
+        <div
+          className="modal-overlay-fix fade-in"
+          onClick={(e) => e.target === e.currentTarget && !deleteLoading && setShowDeleteModal(false)}
+        >
+          <div
+            className="modal-card-fix"
+            style={{
+              background: "linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%)",
+              maxWidth: "560px",
+              border: "1.5px solid rgba(239, 68, 68, 0.45)",
+              boxShadow: "0 10px 45px rgba(239, 68, 68, 0.25)",
+              color: "#e2e8f0",
+            }}
+          >
+            {/* Pinned Danger Header */}
+            <div className="modal-header-pinned" style={{ background: "linear-gradient(90deg, #dc2626, #991b1b)" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span>🚨</span> تأكيد الحذف النهائي لحساب الطالب
+                </h3>
+                <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.82rem", color: "rgba(255,255,255,0.88)" }}>
+                  عملية حساسة وغير قابلة للتراجع
+                </p>
+              </div>
+              <button
+                onClick={() => !deleteLoading && setShowDeleteModal(false)}
+                title="إغلاق النافذة"
+                disabled={deleteLoading}
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  border: "none",
+                  color: "#fff",
+                  width: 34, height: 34,
+                  borderRadius: "50%",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  fontSize: "1.1rem",
+                  fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.2s"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable Modal Body */}
+            <div className="modal-body-scroll">
+              {/* Student Summary Card */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.9rem",
+                  padding: "1rem",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "16px",
+                  marginBottom: "1.2rem",
+                }}
+              >
+                <Avatar src={photoURL || "/logo-circle.png"} alt={fullName} size={48} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "#ffffff" }}>{fullName}</div>
+                  <div style={{ fontSize: "0.82rem", color: "#94a3b8", display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
+                    <span>🎓 {grade || "غير محدد"}</span>
+                    {student.group && <span>👥 {student.group}</span>}
+                    <span>✉️ {email}</span>
+                    {phone && <span>📱 {phone}</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Danger Warning Alert Box */}
+              <div
+                style={{
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1.5px solid rgba(239, 68, 68, 0.35)",
+                  borderRadius: "16px",
+                  padding: "1.1rem",
+                  marginBottom: "1.2rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 800, color: "#f87171", fontSize: "0.95rem", marginBottom: "0.5rem" }}>
+                  <span>⚠️</span>
+                  <span>تنبيه هام ومباشر:</span>
+                </div>
+                <p style={{ margin: "0 0 0.75rem 0", fontSize: "0.85rem", color: "#fca5a5", lineHeight: "1.6" }}>
+                  أنت على وشك حذف حساب الطالب <strong>"{fullName}"</strong> بشكل نهائي من المنصة. هذا الإجراء دائم وسيؤدي إلى مسح العناصر التالية بالكامل من قاعدة بيانات Firestore:
+                </p>
+                <ul style={{ margin: 0, paddingRight: "1.2rem", fontSize: "0.82rem", color: "#cbd5e1", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                  <li>👤 <strong>بيانات المستخدم وبيانات الدخول:</strong> مسح الحساب ولن يتمكن الطالب من الدخول نهائياً.</li>
+                  <li>📝 <strong>سجلات الاختبارات والتطبيقات:</strong> مسح كافة درجات وإجابات ونتائج الطالب.</li>
+                  <li>📈 <strong>سجل الأنشطة والمشاهدات:</strong> حذف كافة تفاعلات وحصص الطالب.</li>
+                  <li>💰 <strong>السجل المالي والاشتراكات:</strong> حذف كافة القيود المالية الخاصة باشتراكاته.</li>
+                  <li>💬 <strong>تذاكر واستفسارات الدعم:</strong> مسح التذاكر والمراسلات الخاصة بالطالب.</li>
+                </ul>
+              </div>
+
+              {/* Safety Checkbox Confirmation */}
+              <div
+                style={{
+                  background: "rgba(0, 0, 0, 0.25)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "14px",
+                  padding: "0.9rem 1rem",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.75rem",
+                  cursor: "pointer",
+                }}
+                onClick={() => setConfirmDeleteCheck(!confirmDeleteCheck)}
+              >
+                <input
+                  type="checkbox"
+                  id={`confirm-delete-${id}`}
+                  checked={confirmDeleteCheck}
+                  onChange={(e) => setConfirmDeleteCheck(e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    marginTop: "0.2rem",
+                    cursor: "pointer",
+                    accentColor: "#ef4444",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <label
+                  htmlFor={`confirm-delete-${id}`}
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: confirmDeleteCheck ? "#fca5a5" : "#94a3b8",
+                    cursor: "pointer",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  أقرّ وأوافق بأنني أريد حذف الطالب <strong>"{fullName}"</strong> ومسح كافة بياناته وسجلاته نهائياً من الموقع وقاعدة البيانات دون إمكانية الاسترجاع.
+                </label>
+              </div>
+            </div>
+
+            {/* Pinned Footer */}
+            <div className="modal-footer-pinned">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                style={{
+                  padding: "0.65rem 1.25rem",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  borderRadius: "30px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  color: "#f1f5f9",
+                  border: "1.5px solid rgba(255, 255, 255, 0.2)",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                }}
+              >
+                ↩️ إلغاء وتراجع
+              </button>
+              <button
+                type="button"
+                onClick={handlePermanentDeleteStudent}
+                disabled={deleteLoading || !confirmDeleteCheck}
+                style={{
+                  padding: "0.65rem 1.5rem",
+                  fontSize: "0.9rem",
+                  fontWeight: 800,
+                  borderRadius: "30px",
+                  background: confirmDeleteCheck
+                    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
+                    : "rgba(239, 68, 68, 0.3)",
+                  color: confirmDeleteCheck ? "#ffffff" : "#94a3b8",
+                  border: "none",
+                  boxShadow: confirmDeleteCheck ? "0 4px 18px rgba(220, 38, 38, 0.45)" : "none",
+                  cursor: deleteLoading || !confirmDeleteCheck ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {deleteLoading ? "⏳ جاري مسح كافة البيانات..." : "🗑️ تأكيد الحذف النهائي الشامل"}
               </button>
             </div>
           </div>
