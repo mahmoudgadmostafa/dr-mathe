@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
 const AuthContext = createContext(null);
@@ -231,7 +231,7 @@ export function AuthProvider({ children }) {
   }
 
   // تسجيل الدخول/إنشاء حساب باستخدام Google مع تقييد معلم واحد فقط
-  async function signInWithGoogle(selectedRole, selectedGrade) {
+  async function signInWithGoogle(selectedRole = "student", selectedGrade = null) {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
@@ -251,11 +251,16 @@ export function AuthProvider({ children }) {
     }
 
     if (!snap.exists()) {
+      if (!selectedGrade && selectedRole === "student") {
+        // Brand new student via Google who needs to pick their grade!
+        return { needsGrade: true, user, isNew: true };
+      }
+
       const newUserData = {
-        fullName: user.displayName || "",
-        email: user.email,
+        fullName: user.displayName || "طالب جديد",
+        email: user.email || "",
         phone: user.phoneNumber || "",
-        grade: selectedGrade,
+        grade: selectedGrade || "",
         role: selectedRole,
         isSubscribed: selectedRole === "teacher" ? true : false,
         authProvider: "google",
@@ -264,11 +269,47 @@ export function AuthProvider({ children }) {
       await setDoc(userRef, newUserData);
       setUserProfile(newUserData);
       localStorage.setItem("math_app_user_uid", user.uid);
+      return { needsGrade: false, user, userProfile: newUserData };
     } else {
-      setUserProfile(snap.data());
+      const data = snap.data();
+      setUserProfile(data);
       localStorage.setItem("math_app_user_uid", user.uid);
+
+      if (data.role === "student" && !data.grade) {
+        return { needsGrade: true, user, isNew: false, userProfile: data };
+      }
+
+      return { needsGrade: false, user, userProfile: data };
     }
-    return user;
+  }
+
+  async function completeGoogleStudentProfile(user, grade) {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    let updatedData;
+    if (!snap.exists()) {
+      updatedData = {
+        fullName: user.displayName || "طالب جديد",
+        email: user.email || "",
+        phone: user.phoneNumber || "",
+        grade: grade,
+        role: "student",
+        isSubscribed: false,
+        authProvider: "google",
+        createdAt: serverTimestamp(),
+      };
+      await setDoc(userRef, updatedData);
+    } else {
+      await updateDoc(userRef, {
+        grade: grade,
+        updatedAt: serverTimestamp(),
+      });
+      const updatedSnap = await getDoc(userRef);
+      updatedData = updatedSnap.data();
+    }
+    setUserProfile(updatedData);
+    localStorage.setItem("math_app_user_uid", user.uid);
+    return updatedData;
   }
 
   async function logout() {
@@ -289,6 +330,7 @@ export function AuthProvider({ children }) {
     logout,
     loading,
     signInWithGoogle,
+    completeGoogleStudentProfile,
   };
 
   if (loading) {
