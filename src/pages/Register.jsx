@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import GradeSelectionModal from "../components/GradeSelectionModal";
 
 const GRADES = [
   "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
@@ -11,7 +12,7 @@ const GRADES = [
 ];
 
 export default function Register() {
-  const { registerStudent, signInWithGoogle } = useAuth();
+  const { registerStudent, signInWithGoogle, completeGoogleStudentProfile } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", grade: GRADES[0], password: "" });
@@ -19,6 +20,7 @@ export default function Register() {
   const [busy, setBusy] = useState(false);
   const selectedRole = "student";
   const [selectedGrade, setSelectedGrade] = useState(GRADES[0]);
+  const [googleUserPending, setGoogleUserPending] = useState(null);
 
   function update(field, value) { setForm((f) => ({ ...f, [field]: value })); }
 
@@ -40,13 +42,25 @@ export default function Register() {
     setError("");
     setBusy(true);
     try {
-      await signInWithGoogle(selectedRole, selectedGrade);
-      navigate("/dashboard");
+      const res = await signInWithGoogle("student", null);
+      if (res?.needsGrade) {
+        setGoogleUserPending(res.user);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (e) {
+      console.error(e);
       setError("فشل إنشاء الحساب عبر جوجل");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleGradeConfirmed(grade) {
+    if (!googleUserPending) return;
+    await completeGoogleStudentProfile(googleUserPending, grade);
+    setGoogleUserPending(null);
+    navigate("/dashboard");
   }
 
   return (
@@ -102,6 +116,14 @@ export default function Register() {
           </p>
         </form>
       </div>
+
+      {googleUserPending && (
+        <GradeSelectionModal
+          user={googleUserPending}
+          onConfirm={handleGradeConfirmed}
+          onCancel={() => setGoogleUserPending(null)}
+        />
+      )}
     </div>
   );
 }

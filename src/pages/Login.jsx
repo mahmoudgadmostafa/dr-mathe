@@ -2,16 +2,16 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import GradeSelectionModal from "../components/GradeSelectionModal";
 
 export default function Login() {
-  const { login, signInWithGoogle } = useAuth();
+  const { login, signInWithGoogle, completeGoogleStudentProfile } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const selectedRole = "student";
-  const [selectedGrade, setSelectedGrade] = useState("الصف الأول الابتدائي");
+  const [googleUserPending, setGoogleUserPending] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -31,13 +31,25 @@ export default function Login() {
     setError("");
     setBusy(true);
     try {
-      await signInWithGoogle(selectedRole, selectedGrade);
-      navigate("/dashboard");
+      const res = await signInWithGoogle("student", null);
+      if (res?.needsGrade) {
+        setGoogleUserPending(res.user);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (e) {
+      console.error(e);
       setError("فشل تسجيل الدخول عبر جوجل");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleGradeConfirmed(selectedGrade) {
+    if (!googleUserPending) return;
+    await completeGoogleStudentProfile(googleUserPending, selectedGrade);
+    setGoogleUserPending(null);
+    navigate("/dashboard");
   }
 
   return (
@@ -94,6 +106,14 @@ export default function Login() {
           </p>
         </form>
       </div>
+
+      {googleUserPending && (
+        <GradeSelectionModal
+          user={googleUserPending}
+          onConfirm={handleGradeConfirmed}
+          onCancel={() => setGoogleUserPending(null)}
+        />
+      )}
     </div>
   );
 }

@@ -3,12 +3,25 @@
 import { useAuth } from "../context/AuthContext";
 import TeacherDashboard from "./TeacherDashboard";
 import StudentDashboard from "./StudentDashboard";
+import GradeSelectionModal from "../components/GradeSelectionModal";
 
 export default function Dashboard() {
-  const { isTeacher, isStudent, userProfile } = useAuth();
+  const { isTeacher, isStudent, userProfile, currentUser, completeGoogleStudentProfile } = useAuth();
 
   if (isTeacher) return <TeacherDashboard />;
-  if (isStudent) return <StudentDashboard />;
+  if (isStudent) {
+    if (!userProfile?.grade) {
+      return (
+        <GradeSelectionModal
+          user={currentUser}
+          onConfirm={async (grade) => {
+            await completeGoogleStudentProfile(currentUser, grade);
+          }}
+        />
+      );
+    }
+    return <StudentDashboard />;
+  }
 
   return (
     <div className="page">
