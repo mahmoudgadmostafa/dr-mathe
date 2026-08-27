@@ -416,21 +416,10 @@ export default function StudentDashboard() {
     return libraryItems.filter((i) => i.type === libraryTab);
   }, [libraryItems, libraryTab]);
 
-  // Sidebar Menu Items Definition
-  const sidebarItems = [
-    { id: "home", icon: "🏠", label: "الرئيسية" },
-    { id: "live", icon: "📡", label: "الحصص المباشرة" },
-    { id: "library", icon: "📚", label: "المكتبة والشروحات" },
-    { id: "quizzes", icon: "📝", label: "الاختبارات الذكية" },
-    { id: "notifications", icon: "🔔", label: "الإشعارات والتنبيهات" },
-    { id: "support", icon: "🧑‍💻", label: "الدعم والرسائل" },
-    { id: "profile", icon: "👤", label: "الملف الشخصي" },
-  ];
-
   return (
     <div className="dashboard-modern fade-in" style={{ paddingBottom: "3rem" }}>
       {/* Top Welcome Header */}
-      <div className="dashboard-banner glass" style={{ marginBottom: "1.5rem", background: "linear-gradient(135deg, rgba(30,27,75,0.9), rgba(15,23,42,0.95))", border: "1.5px solid rgba(139,92,246,0.3)" }}>
+      <div className="dashboard-banner glass" style={{ background: "linear-gradient(135deg, rgba(30,27,75,0.9), rgba(15,23,42,0.95))", border: "1.5px solid rgba(139,92,246,0.3)" }}>
         <div className="dashboard-banner-content">
           <img src="/logo-circle.png" alt="logo" className="dashboard-avatar" style={{ border: "2px solid #a855f7" }} />
           <div>
@@ -449,40 +438,9 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Main Container with Sidebar + Vertical Line + Content Area */}
-      <div className="student-layout-wrapper">
-        {/* ── SIDEBAR MENU (القائمة الجانبية) ── */}
-        <aside className="glass student-sidebar">
-          <div className="sidebar-user-info">
-            <img src="/logo-circle.png" alt="Avatar" style={{ width: 58, height: 58, borderRadius: "50%", margin: "0 auto 0.5rem", border: "2px solid #38bdf8" }} />
-            <div style={{ fontWeight: 900, fontSize: "1rem", color: "#ffffff" }}>{userProfile?.fullName}</div>
-            <div style={{ fontSize: "0.82rem", color: "#38bdf8", marginTop: "0.2rem", fontWeight: 700 }}>{userProfile?.grade || "طالب المنصة"}</div>
-          </div>
-
-          <div className="sidebar-buttons-group">
-            {sidebarItems.map((item) => {
-              const isActive = activeMainTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectTab(item.id)}
-                  className={`sidebar-tab-btn ${isActive ? "active" : ""}`}
-                >
-                  <span style={{ fontSize: "1.3rem" }}>{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        {/* ── VERTICAL DIVIDER LINE (الفاصل الخطي الرأسي) ── */}
-        <div className="student-vertical-divider" />
-
-        {/* ── MAIN CONTENT DISPLAY AREA (منطقة العرض الرئيسية) ── */}
-        <main className="student-main-content">
-
-          {/* 1️⃣ TAB 1: HOME (الرئيسية) */}
+      {/* Main Content Area */}
+      <div className="student-tab-display-area">
+        {/* 1️⃣ TAB 1: HOME (الرئيسية) */}
           {activeMainTab === "home" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               {/* Countdown Card for Next Upcoming Session */}
@@ -879,7 +837,6 @@ export default function StudentDashboard() {
             <SupportTickets defaultTab="support" />
           )}
 
-        </main>
       </div>
 
       {/* EMBEDDED LIBRARY ITEM VIEWER MODAL */}

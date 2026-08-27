@@ -914,26 +914,28 @@ body::before {
 .dashboard-modern {
   max-width: 1140px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 5rem;
+  padding: 0.25rem 0 3rem;
   display: flex;
   flex-direction: column;
-  gap: 2.25rem;
+  gap: 1.25rem;
 }
 
-/* ── Welcome Banner ── */
+/* ── Welcome Banner (Compact & Sleek) ── */
 .dashboard-banner {
-  padding: 2rem 2.25rem;
-  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.4rem !important;
+  min-height: 58px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem;
   background: linear-gradient(135deg, #0f172a, #1e1b4b, #0284c7);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
   position: relative;
   overflow: hidden;
   color: #ffffff;
+  margin-bottom: 0.85rem !important;
 }
 
 .dashboard-banner::before {
@@ -956,39 +958,41 @@ body::before {
 .dashboard-banner-content {
   display: flex;
   align-items: center;
-  gap: 1.4rem;
+  gap: 0.9rem;
 }
 
 .dashboard-avatar {
-  width: 76px;
-  height: 76px;
+  width: 44px !important;
+  height: 44px !important;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.85);
   animation: logoSway 5.2s ease-in-out infinite;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+  flex-shrink: 0;
 }
 
 .dashboard-avatar:hover {
   animation-play-state: paused;
   transform: scale(1.14) rotate(6deg);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 .dashboard-welcome {
-  font-size: 1.85rem;
+  font-size: 1.15rem !important;
   font-weight: 900;
   color: #ffffff;
-  margin-bottom: 0.3rem;
-  letter-spacing: -0.3px;
+  margin: 0 0 0.15rem 0 !important;
+  letter-spacing: -0.2px;
 }
 
 .dashboard-role {
   color: #cbd5e1;
-  font-size: 0.92rem;
+  font-size: 0.82rem !important;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  margin: 0 !important;
+  letter-spacing: 0.1px;
 }
 
 /* ── Stats Grid ── */
@@ -1375,33 +1379,158 @@ body::before {
    UNIVERSAL RESPONSIVE DESIGN (MOBILE, TABLET, LAPTOP, DESKTOP)
    ========================================================================== */
 
-/* Teacher Layout & Interactive Sidebar Styles */
-.teacher-layout-wrapper {
+/* ==========================================================================
+   APP BODY CONTAINER & FLOATING ROUNDED SIDEBARS (مستطيل بحواف دائرية)
+   ========================================================================== */
+.site-root-layout {
+  min-height: 100vh;
   display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
+.app-body-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0.75rem auto 1.5rem auto;
+  padding: 0 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-body-container.has-sidebar-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.app-main-area-with-header {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-main-area-with-header .header-floating-rounded {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 0 0.5rem 0 !important;
+  position: sticky !important;
+  top: 0.75rem !important;
+  z-index: 200 !important;
+}
+
+.app-main-content {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 🌟 Floating Rounded Teacher Sidebar (مستطيل دائري عائم) */
 .teacher-sidebar {
   width: 270px;
   flex-shrink: 0;
   padding: 1.25rem 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: 24px !important;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   position: sticky;
-  top: 1.5rem;
-  background: #ffffff;
-  border: 1px solid rgba(2, 132, 199, 0.15);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  top: 0.75rem;
+  max-height: calc(100vh - 1.5rem);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(2, 132, 199, 0.2) !important;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08), 0 0 20px rgba(2, 132, 199, 0.05);
+  overflow-y: auto;
+  overflow-x: visible;
+  z-index: 100;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.35s ease;
 }
 
+/* Sidebar Toggle Buttons (3-Bars + Arrow next to Avatar) */
+.sidebar-collapse-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.08);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  color: #0284c7;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.sidebar-collapse-toggle-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+}
+
+.toggle-btn-bars {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.toggle-btn-arrow {
+  font-size: 0.85rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.student-toggle-btn {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.25);
+  color: #7c3aed;
+}
+
+.student-toggle-btn:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+.student-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+/* Header Section */
 .sidebar-teacher-header {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  justify-content: space-between;
+  gap: 0.6rem;
   padding-bottom: 0.75rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.sidebar-teacher-profile-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sidebar-teacher-avatar {
@@ -1411,17 +1540,28 @@ body::before {
   object-fit: cover;
   border: 2px solid #0284c7;
   box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-teacher-avatar:hover {
+  transform: scale(1.05);
 }
 
 .sidebar-teacher-info {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.25s ease, max-width 0.3s ease;
+  white-space: nowrap;
 }
 
 .sidebar-teacher-name {
   font-weight: 800;
   font-size: 0.95rem;
   color: #0f172a;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .sidebar-teacher-badge {
@@ -1436,16 +1576,18 @@ body::before {
   margin-bottom: 0.2rem;
 }
 
+/* Teacher Sidebar Nav */
 .teacher-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  overflow: visible !important;
 }
 
 .teacher-nav-item {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  justify-content: space-between;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-sm);
   text-decoration: none;
@@ -1455,6 +1597,14 @@ body::before {
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   border: 1px solid transparent;
+  overflow: visible !important;
+}
+
+.teacher-nav-content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
 }
 
 .teacher-nav-item:hover {
@@ -1471,14 +1621,184 @@ body::before {
 }
 
 .teacher-nav-icon {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.teacher-nav-item:hover .teacher-nav-icon {
+  transform: scale(1.15);
 }
 
 .teacher-nav-label {
-  flex: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.teacher-nav-badge {
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  border-radius: 20px;
+  padding: 0.15rem 0.5rem;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.teacher-nav-indicator {
+  position: absolute;
+  right: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 4px;
+  border-radius: 4px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+/* ==========================================================================
+   COLLAPSED TEACHER SIDEBAR STATE
+   ========================================================================== */
+.teacher-sidebar.collapsed {
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  padding: 1.25rem 0.5rem !important;
+  align-items: center;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  z-index: 400;
+}
+
+.teacher-sidebar.collapsed .sidebar-teacher-header {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  width: 100%;
+}
+
+.teacher-sidebar.collapsed .sidebar-teacher-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.teacher-sidebar.collapsed .sidebar-teacher-info {
+  display: none !important;
+}
+
+.teacher-sidebar.collapsed .sidebar-collapse-toggle-btn {
+  width: 100%;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.78rem;
+  gap: 3px;
+}
+
+.teacher-sidebar.collapsed .teacher-sidebar-nav {
+  width: 100%;
+  gap: 0.5rem;
+  overflow: visible !important;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-item {
+  padding: 0.75rem 0 !important;
+  justify-content: center !important;
+  border-radius: 14px;
+  overflow: visible !important;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-item:hover {
+  transform: scale(1.08);
+  z-index: 99999 !important;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-label {
+  display: none !important;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-badge {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.65rem;
+  min-width: 16px;
+  text-align: center;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-indicator {
+  right: 2px;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+}
+
+/* Floating Tooltips (Appears on Hover when Collapsed - Always on top and never hidden)
+   Since sidebar is position:fixed, tooltip uses fixed positioning too to escape any stacking */
+.sidebar-floating-tooltip {
+  position: fixed;
+  right: 80px; /* fallback – overridden by JS-free approach below */
+  top: auto;
+  transform: translateY(-50%) scale(0.9);
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              visibility 0.2s;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(2, 132, 199, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  z-index: 999999 !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* CSS-only tooltip positioning relative to collapsed sidebar (right edge = 76px from right) */
+.teacher-sidebar.collapsed .teacher-nav-item:hover .sidebar-floating-tooltip {
+  right: 82px;
+  left: auto;
+}
+
+.sidebar-floating-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -7px;
+  transform: translateY(-50%);
+  border-width: 7px 0 7px 7px;
+  border-style: solid;
+  border-color: transparent transparent transparent #0f172a;
+}
+
+.tooltip-badge-pill {
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  border-radius: 12px;
+  padding: 0.1rem 0.45rem;
+}
+
+.teacher-sidebar.collapsed .teacher-nav-item:hover .sidebar-floating-tooltip,
+.student-sidebar.collapsed .sidebar-tab-btn:hover .sidebar-floating-tooltip {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(-50%) scale(1) !important;
 }
 
 .teacher-vertical-divider {
@@ -1493,84 +1813,187 @@ body::before {
 .teacher-main-content {
   flex: 1;
   min-width: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Student Layout Classes */
-.student-layout-wrapper {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
+/* ==========================================================================
+   STUDENT LAYOUT & FLOATING ROUNDED SIDEBAR (مستطيل بحواف دائرية)
+   ========================================================================== */
+.student-tab-display-area {
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 🌟 Floating Rounded Student Sidebar (مستطيل دائري عائم) */
 .student-sidebar {
   width: 250px;
   flex-shrink: 0;
-  padding: 1.2rem 1rem;
-  border-radius: 22px;
+  padding: 1.25rem 1rem;
+  border-radius: 24px !important;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   position: sticky;
-  top: 1.5rem;
-  background: #ffffff;
-  border: 1px solid rgba(124, 58, 237, 0.15);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  top: 0.75rem;
+  max-height: calc(100vh - 1.5rem);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(124, 58, 237, 0.2) !important;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08), 0 0 20px rgba(124, 58, 237, 0.05);
+  overflow-y: auto;
+  overflow-x: visible;
+  z-index: 100;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.35s ease;
 }
 
-.sidebar-user-info {
-  text-align: center;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  margin-bottom: 0.5rem;
+.student-sidebar-avatar-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.student-sidebar-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #7c3aed;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.student-sidebar-avatar:hover {
+  transform: scale(1.05);
 }
 
 .sidebar-buttons-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  overflow: visible !important;
 }
 
 .sidebar-tab-btn {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   width: 100%;
-  padding: 0.8rem 1.1rem;
-  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: #f8fafc;
   color: #334155;
   font-weight: 700;
+  font-size: 0.92rem;
   cursor: pointer;
   text-align: right;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: visible !important;
+}
+
+.sidebar-tab-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-tab-btn:hover .sidebar-tab-icon {
+  transform: scale(1.15);
+}
+
+.sidebar-tab-label {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
 }
 
 .sidebar-tab-btn:hover {
   background: rgba(124, 58, 237, 0.08);
   color: #7c3aed;
+  transform: translateX(-4px);
 }
 
 .sidebar-tab-btn.active {
   border: 1.5px solid #7c3aed;
   background: linear-gradient(135deg, #7c3aed, #0284c7);
   color: #ffffff;
-  font-weight: 900;
-  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.25);
+  font-weight: 800;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.3);
 }
 
-.student-vertical-divider {
-  width: 3px;
-  min-height: 480px;
-  background: linear-gradient(180deg, #a855f7 0%, #38bdf8 50%, rgba(255, 255, 255, 0.1) 100%);
-  border-radius: 3px;
-  align-self: stretch;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+/* Collapsed Student Sidebar State */
+.student-sidebar.collapsed {
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  padding: 1.25rem 0.5rem !important;
+  align-items: center;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  z-index: 400;
 }
 
-.student-main-content {
-  flex: 1;
-  min-width: 300px;
+.student-sidebar.collapsed .sidebar-teacher-header {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  width: 100%;
+}
+
+.student-sidebar.collapsed .student-sidebar-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.student-sidebar.collapsed .sidebar-teacher-info {
+  display: none !important;
+}
+
+.student-sidebar.collapsed .student-toggle-btn {
+  width: 100%;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.78rem;
+  gap: 3px;
+}
+
+.student-sidebar.collapsed .sidebar-buttons-group {
+  width: 100%;
+  gap: 0.5rem;
+  overflow: visible !important;
+}
+
+.student-sidebar.collapsed .sidebar-tab-btn {
+  padding: 0.75rem 0 !important;
+  justify-content: center !important;
+  border-radius: 14px;
+  overflow: visible !important;
+}
+
+.student-sidebar.collapsed .sidebar-tab-btn:hover {
+  transform: scale(1.08);
+  z-index: 99999 !important;
+}
+
+.student-sidebar.collapsed .sidebar-tab-label {
+  display: none !important;
+}
+
+.student-sidebar.collapsed .sidebar-tab-btn:hover .sidebar-floating-tooltip {
+  right: 82px;
+  left: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(-50%) scale(1) !important;
 }
 
 /* ==========================================================================
@@ -1727,6 +2150,271 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.25rem;
+}
+
+/* ==========================================================================
+   FLOATING ROUNDED RECTANGLE HEADER (مستطيل دائري عائم)
+   ========================================================================== */
+.header-floating-rounded {
+  max-width: 1400px;
+  width: calc(100% - 2rem) !important;
+  margin: 0.85rem auto 0.5rem auto !important;
+  padding: 0.55rem 1.25rem !important;
+  border-radius: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  position: sticky !important;
+  top: 0.75rem !important;
+  z-index: 500 !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1.5px solid rgba(2, 132, 199, 0.18) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 0 20px rgba(2, 132, 199, 0.06) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.header-right-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.header-left-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.header-left-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: nowrap;
+}
+
+/* ==========================================================================
+   MODERN HEADER ACTION BUTTONS (NOTIFICATIONS & SUPPORT & LOGOUT)
+   ========================================================================== */
+.header-action-btn-modern {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.header-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Notifications Button */
+.notif-action-btn {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(56, 189, 248, 0.12));
+  border-color: rgba(2, 132, 199, 0.22);
+  color: #0284c7;
+}
+
+.notif-action-btn:hover {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+}
+
+.notif-action-btn:hover .bell-ring-icon {
+  animation: bellSwing 0.6s ease-in-out;
+}
+
+@keyframes bellSwing {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-12deg); }
+  60% { transform: rotate(8deg); }
+  80% { transform: rotate(-4deg); }
+}
+
+/* Support Button */
+.support-action-btn {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(168, 85, 247, 0.12));
+  border-color: rgba(124, 58, 237, 0.22);
+  color: #7c3aed;
+}
+
+.support-action-btn:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #ffffff;
+  border-color: #7c3aed;
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+}
+
+.support-action-btn:hover .support-headset-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+/* Modern Logout Button */
+.logout-action-btn {
+  width: auto;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 0.75rem;
+  gap: 0.35rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #ef4444;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.logout-action-btn:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.header-badge-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+  border: 2px solid #ffffff;
+}
+
+/* Pulse animation on badges */
+.notif-badge-pulse {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* مستطيل صغير به اسم الطالب أو المعلم حسب نوع الحساب + أفاتار */
+.header-user-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0.8rem 0.25rem 0.4rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(124, 58, 237, 0.12));
+  border: 1.5px solid rgba(2, 132, 199, 0.22);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
+}
+
+.header-user-card-badge:hover {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.14), rgba(124, 58, 237, 0.18));
+  border-color: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15);
+}
+
+.header-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #0284c7;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.header-user-card-badge:hover .header-user-avatar {
+  transform: scale(1.08);
+}
+
+.header-user-card-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.header-user-card-name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  max-width: 140px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.header-user-card-role {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0284c7;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 768px) {
+  .header-floating-rounded {
+    width: calc(100% - 1rem) !important;
+    margin: 0.5rem auto 0.3rem auto !important;
+    padding: 0.45rem 0.8rem !important;
+    border-radius: 16px !important;
+    top: 0.5rem !important;
+  }
+
+  .header-user-card-name {
+    max-width: 100px;
+    font-size: 0.78rem;
+  }
+}
+
+@media screen and (max-width: 520px) {
+  .header-user-card-role {
+    display: none;
+  }
+  .header-user-card-name {
+    max-width: 80px;
+  }
+  .header-user-card-badge {
+    padding: 0.2rem 0.5rem 0.2rem 0.3rem;
+    gap: 0.4rem;
+  }
+  .header-user-avatar {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 /* ==========================================================================
@@ -2161,10 +2849,10 @@ textarea {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  z-index: 299;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998 !important;
   animation: overlayFadeIn 0.2s ease both;
 }
 
@@ -2187,7 +2875,7 @@ textarea {
    ========================================================================== */
 
 @media screen and (max-width: 868px) {
-  /* Show hamburger button on mobile for teachers */
+  /* Show hamburger button on mobile for teachers & students */
   .hamburger-btn {
     display: inline-flex;
   }
@@ -2202,8 +2890,9 @@ textarea {
     display: inline-flex;
   }
 
-  /* Teacher sidebar: becomes a fixed drawer from the right */
-  .teacher-sidebar {
+  /* Teacher & Student sidebars: become a fixed drawer from the right on mobile */
+  .teacher-sidebar,
+  .student-sidebar {
     position: fixed !important;
     top: 0 !important;
     right: -290px !important;
@@ -2211,22 +2900,28 @@ textarea {
     height: 100vh !important;
     width: 280px !important;
     max-width: 85vw !important;
-    z-index: 300 !important;
+    z-index: 999 !important;
     overflow-y: auto;
     border-radius: 0 !important;
     border-left: 1px solid rgba(2,132,199,0.18) !important;
     padding-top: 3.5rem !important;
     transition: right 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    box-shadow: -8px 0 30px rgba(15,23,42,0.15) !important;
+    box-shadow: -8px 0 30px rgba(15,23,42,0.25) !important;
+  }
+
+  .student-sidebar {
+    border-left-color: rgba(124, 58, 237, 0.18) !important;
   }
 
   /* Slide the sidebar in when open */
-  .teacher-sidebar.sidebar-mobile-open {
+  .teacher-sidebar.sidebar-mobile-open,
+  .student-sidebar.sidebar-mobile-open {
     right: 0 !important;
   }
 
-  /* Teacher sidebar nav: keep as vertical column inside drawer */
-  .teacher-sidebar-nav {
+  /* Sidebar nav: keep as vertical column inside drawer */
+  .teacher-sidebar-nav,
+  .sidebar-buttons-group {
     flex-direction: column !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
@@ -2234,7 +2929,8 @@ textarea {
     gap: 0.35rem !important;
   }
 
-  .teacher-nav-item {
+  .teacher-nav-item,
+  .sidebar-tab-btn {
     white-space: normal !important;
     width: 100% !important;
     flex-shrink: 1 !important;
@@ -2252,7 +2948,8 @@ textarea {
 
 /* Very small phones: shorten sidebar width */
 @media screen and (max-width: 380px) {
-  .teacher-sidebar {
+  .teacher-sidebar,
+  .student-sidebar {
     width: 260px !important;
     max-width: 88vw !important;
   }
@@ -2312,31 +3009,11 @@ textarea {
 }
 
 /* ==========================================================================
-   TEACHER LAYOUT — desktop sidebar stays normal (not fixed)
+   TEACHER SIDEBAR — Desktop: always fixed, no override needed
    ========================================================================== */
 
 @media screen and (min-width: 869px) {
-  /* On desktop+, revert any mobile-drawer styles */
-  .teacher-sidebar {
-    position: sticky !important;
-    top: 1.5rem !important;
-    right: auto !important;
-    height: auto !important;
-    overflow-y: visible !important;
-    width: 270px !important;
-    max-width: 270px !important;
-    border-radius: var(--radius-lg) !important;
-    padding-top: 1.25rem !important;
-    transition: none !important;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
-    border-left: none !important;
-  }
-
-  .teacher-sidebar-nav {
-    flex-direction: column !important;
-    overflow-x: visible !important;
-  }
-
+  /* Sidebar close button and overlay are for mobile only */
   .sidebar-close-btn {
     display: none !important;
   }
@@ -2348,26 +3025,41 @@ textarea {
   .hamburger-btn {
     display: none !important;
   }
+
+  /* Teacher sidebar-nav on desktop: vertical column */
+  .teacher-sidebar-nav {
+    flex-direction: column !important;
+    overflow-x: visible !important;
+  }
 }
 
 /* Laptop range: slightly narrower sidebar */
 @media screen and (max-width: 1279px) and (min-width: 1024px) {
-  .teacher-sidebar {
-    width: 240px !important;
-    max-width: 240px !important;
+  .teacher-sidebar:not(.collapsed) {
+    width: 240px;
+    max-width: 240px;
+  }
+  .student-sidebar:not(.collapsed) {
+    width: 230px;
+    max-width: 230px;
   }
 }
 
 /* Tablet landscape range */
 @media screen and (max-width: 1023px) and (min-width: 869px) {
-  .teacher-sidebar {
-    width: 220px !important;
-    max-width: 220px !important;
-    padding: 1rem 0.75rem !important;
+  .teacher-sidebar:not(.collapsed) {
+    width: 220px;
+    max-width: 220px;
+    padding: 1rem 0.75rem;
+  }
+  .student-sidebar:not(.collapsed) {
+    width: 210px;
+    max-width: 210px;
+    padding: 1rem 0.75rem;
   }
   .teacher-nav-item {
-    padding: 0.65rem 0.75rem !important;
-    font-size: 0.85rem !important;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -2875,10 +3567,11 @@ textarea {
    ========================================================================== */
 
 .site-footer {
-  margin-top: 3rem;
+  width: 100% !important;
+  margin-top: auto;
   background: rgba(255, 255, 255, 0.95);
-  border-top: 1px solid rgba(2, 132, 199, 0.12);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(2, 132, 199, 0.14);
+  box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.04);
   padding: 24px 0;
   position: relative;
   z-index: 10;

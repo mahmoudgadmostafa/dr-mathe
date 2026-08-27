@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 
 export default function Header({ onToggleSidebar, sidebarOpen }) {
-  const { currentUser, userProfile, logout, isTeacher } = useAuth();
+  const { currentUser, userProfile, logout, isTeacher, isStudent } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,8 +58,8 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
           const notifEmail = (n.targetStudentEmail || "").trim().toLowerCase();
           const notifPhone = (n.targetStudentPhone || "").trim();
           return (val && (val === studentUid || val === studentEmail || val === studentPhone)) ||
-                 (notifEmail && notifEmail === studentEmail) ||
-                 (notifPhone && notifPhone === studentPhone);
+            (notifEmail && notifEmail === studentEmail) ||
+            (notifPhone && notifPhone === studentPhone);
         }
         if (n.targetType === "grade" && (n.targetValue || "").trim() === studentGrade) return true;
         if (n.targetType === "group" && (n.targetValue || "").trim() === studentGroup) return true;
@@ -129,28 +129,11 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
   };
 
   return (
-    <header
-      className="glass page-header header-sticky"
-      style={{
-        padding: "0.6rem 1rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "0.5rem",
-        position: "sticky",
-        top: 0,
-        zIndex: 200,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderRadius: 0,
-        borderBottom: "1px solid rgba(2,132,199,0.12)",
-        boxShadow: "0 4px 20px rgba(15,23,42,0.07)",
-      }}
-    >
+    <header className="glass page-header header-sticky header-floating-rounded">
       {/* Right: Hamburger (mobile) + Brand Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
-        {/* Hamburger: only shown for teacher on mobile */}
-        {currentUser && isTeacher && (
+      <div className="header-right-brand">
+        {/* Hamburger: shown for teacher & student on mobile */}
+        {currentUser && (isTeacher || isStudent) && (
           <button
             id="sidebar-toggle-btn"
             className="hamburger-btn"
@@ -222,135 +205,66 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
         })()}
       </div>
 
-      {/* Center: Centered User / Student Name */}
-      {currentUser && (
-        <div
-          className="header-user-badge"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flex: "1 1 auto",
-            minWidth: 0,
-            overflow: "hidden",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "0.82rem",
-              fontWeight: 800,
-              color: "var(--color-primary)",
-              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.15))",
-              border: "1px solid rgba(139, 92, 246, 0.3)",
-              padding: "0.25rem 0.75rem",
-              borderRadius: "20px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.3rem",
-              maxWidth: "100%",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {isTeacher ? "👨‍🏫 المعلم" : `👨‍🎓 ${userProfile?.fullName || "الطالب"}`}
-          </span>
-        </div>
-      )}
-
-      {/* Left: Icon-only Navigation Buttons (🔔, 🧑‍💻) + Logout */}
-      <nav
-        style={{
-          display: "flex",
-          gap: "0.4rem",
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
+      {/* Left: Notifications + Support + User Card Badge + Logout */}
+      <nav className="header-left-actions">
         {currentUser && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            {/* 🔔 Notifications Icon Only */}
+          <div className="header-left-inner">
+            {/* 🔔 Modern Notifications Icon */}
             <Link
               to={isTeacher ? "/notifications" : "/dashboard?tab=notifications"}
-              className="button button-sm button-muted header-icon-btn"
-              style={{
-                fontSize: "1rem",
-                padding: "0.3rem 0.55rem",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                borderRadius: "12px",
-                minHeight: "34px",
-                minWidth: "34px",
-              }}
+              className="header-action-btn-modern notif-action-btn"
               title="الإشعارات والتنبيهات"
+              aria-label="الإشعارات والتنبيهات"
             >
-              🔔
+              <svg
+                className="header-action-icon bell-ring-icon"
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
               {notifCount > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-5px",
-                    right: "-5px",
-                    background: "#ef4444",
-                    color: "#ffffff",
-                    fontSize: "0.65rem",
-                    fontWeight: 900,
-                    borderRadius: "50%",
-                    minWidth: "17px",
-                    height: "17px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "2px",
-                    boxShadow: "0 0 8px rgba(239, 68, 68, 0.7)",
-                    border: "2px solid #ffffff",
-                  }}
-                >
+                <span className="header-badge-count notif-badge-pulse">
                   {notifCount}
                 </span>
               )}
             </Link>
 
-            {/* 🧑‍💻 Support Icon Only (الدعم) */}
+            {/* 🧑‍💻 Modern Support Icon (الدعم الفني) */}
             <Link
               to={isTeacher ? "/support-tickets" : "/dashboard?tab=support"}
-              className="button button-sm button-muted header-icon-btn"
-              style={{
-                fontSize: "1rem",
-                padding: "0.3rem 0.55rem",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                borderRadius: "12px",
-                minHeight: "34px",
-                minWidth: "34px",
-              }}
-              title="الدعم والطلبات"
+              className="header-action-btn-modern support-action-btn"
+              title="الدعم والرسائل الفنية"
+              aria-label="الدعم والرسائل"
             >
-              🧑‍💻
+              <svg
+                className="header-action-icon support-headset-icon"
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+              </svg>
               {supportCount > 0 && (
                 <span
+                  className="header-badge-count"
                   style={{
-                    position: "absolute",
-                    top: "-5px",
-                    right: "-5px",
-                    background: isTeacher ? "#f59e0b" : "#10b981",
-                    color: "#ffffff",
-                    fontSize: "0.65rem",
-                    fontWeight: 900,
-                    borderRadius: "50%",
-                    minWidth: "17px",
-                    height: "17px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "2px",
-                    boxShadow: "0 0 8px rgba(245, 158, 11, 0.7)",
-                    border: "2px solid #ffffff",
+                    background: isTeacher
+                      ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                      : "linear-gradient(135deg, #10b981, #059669)",
                   }}
                 >
                   {supportCount}
@@ -358,18 +272,49 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
               )}
             </Link>
 
-            <button
-              className="button button-sm button-muted logout-btn-text"
-              onClick={handleLogout}
-              style={{
-                fontSize: "0.78rem",
-                padding: "0.3rem 0.65rem",
-                borderRadius: "12px",
-                whiteSpace: "nowrap",
-                minHeight: "34px",
-              }}
+            {/* مستطيل صغير به اسم الطالب أو المعلم حسب نوع الحساب + أفاتار */}
+            <div
+              className="header-user-card-badge"
+              title={userProfile?.fullName || (isTeacher ? "المعلم المدير" : "الطالب")}
             >
-              خروج
+              <img
+                src="/logo-circle.png"
+                alt="Avatar"
+                className="header-user-avatar"
+              />
+              <div className="header-user-card-info">
+                <span className="header-user-card-name">
+                  {userProfile?.fullName || (isTeacher ? "المعلم المدير" : "الطالب")}
+                </span>
+                <span className="header-user-card-role">
+                  {isTeacher ? "👨‍🏫 المعلم المدير" : `👨‍🎓 ${userProfile?.grade || "طالب المنصة"}`}
+                </span>
+              </div>
+            </div>
+
+            {/* زر تسجيل الخروج العصري */}
+            <button
+              className="header-action-btn-modern logout-action-btn"
+              onClick={handleLogout}
+              title="تسجيل الخروج من المنصة"
+              aria-label="تسجيل الخروج"
+            >
+              <svg
+                className="header-action-icon"
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span className="logout-btn-label">خروج</span>
             </button>
           </div>
         )}

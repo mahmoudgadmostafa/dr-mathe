@@ -46,7 +46,7 @@ export default function TeacherAddStudent() {
 
   return (
     <div className="dashboard-modern fade-in">
-      <div className="dashboard-banner glass" style={{ marginBottom: "1.5rem" }}>
+      <div className="dashboard-banner glass">
         <div className="dashboard-banner-content">
           <img src="/logo-circle.png" alt="logo" className="dashboard-avatar" />
           <div>
