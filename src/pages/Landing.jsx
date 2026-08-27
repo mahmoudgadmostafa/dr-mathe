@@ -156,7 +156,7 @@ export default function Landing() {
         <h2 className="font-heading">جاهز لتحقيق التميز في الرياضيات؟</h2>
         <p>انضم الآن لمئات الطلاب الذين غيروا نظرتهم للرياضيات واكتشف متعة التعلم.</p>
         <Link to="/register" className="button button-primary cta-btn">
-          أنشئ حسابك مجاناً
+          أنشئ حسابك 
         </Link>
       </section>
     </div>
