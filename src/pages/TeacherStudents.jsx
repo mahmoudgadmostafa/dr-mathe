@@ -266,7 +266,7 @@ export default function TeacherStudents() {
               </table>
             </div>
           ) : (
-            <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
+            <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: "1rem" }}>
               {group.students.map((s) => (
                 <StudentCard key={s.id} student={s} viewMode="card" />
               ))}

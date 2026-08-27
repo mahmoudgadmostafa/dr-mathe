@@ -1,24 +1,53 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./lib/ProtectedRoute";
 import Layout from "./components/Layout";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import TeacherRegister from "./pages/TeacherRegister";
-import TeacherAddStudent from "./pages/TeacherAddStudent";
-import TeacherStudents from "./pages/TeacherStudents";
-import TeacherGroups from "./pages/TeacherGroups";
-import TeacherLiveSessions from "./pages/TeacherLiveSessions";
-import TeacherLibrary from "./pages/TeacherLibrary";
-import TeacherQuizzes from "./pages/TeacherQuizzes";
-import TeacherProfileSettings from "./pages/TeacherProfileSettings";
-import TeacherReports from "./pages/TeacherReports";
-import TeacherFinances from "./pages/TeacherFinances";
-import Dashboard from "./pages/Dashboard";
-import TeacherNotifications from "./pages/TeacherNotifications";
-import SupportTickets from "./pages/SupportTickets";
 import { useAuth } from "./context/AuthContext";
+
+// ── Lazy-loaded pages (code-split by route) ─────────────────────────────────
+const Landing              = lazy(() => import("./pages/Landing"));
+const Login                = lazy(() => import("./pages/Login"));
+const Register             = lazy(() => import("./pages/Register"));
+const TeacherRegister      = lazy(() => import("./pages/TeacherRegister"));
+const TeacherAddStudent    = lazy(() => import("./pages/TeacherAddStudent"));
+const TeacherStudents      = lazy(() => import("./pages/TeacherStudents"));
+const TeacherGroups        = lazy(() => import("./pages/TeacherGroups"));
+const TeacherLiveSessions  = lazy(() => import("./pages/TeacherLiveSessions"));
+const TeacherLibrary       = lazy(() => import("./pages/TeacherLibrary"));
+const TeacherQuizzes       = lazy(() => import("./pages/TeacherQuizzes"));
+const TeacherProfileSettings = lazy(() => import("./pages/TeacherProfileSettings"));
+const TeacherReports       = lazy(() => import("./pages/TeacherReports"));
+const TeacherFinances      = lazy(() => import("./pages/TeacherFinances"));
+const Dashboard            = lazy(() => import("./pages/Dashboard"));
+const TeacherNotifications = lazy(() => import("./pages/TeacherNotifications"));
+const SupportTickets       = lazy(() => import("./pages/SupportTickets"));
+
+// ── Mini fallback shown during lazy chunk load ───────────────────────────────
+function PageLoader() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "60vh",
+        flexDirection: "column",
+        gap: "1rem",
+      }}
+    >
+      <img
+        src="/logo-circle.png"
+        alt="Loading"
+        className="logo-loading-sway"
+        style={{ width: "70px", height: "70px", objectFit: "cover" }}
+      />
+      <p style={{ color: "var(--color-primary)", fontFamily: "var(--font-body)", fontSize: "1rem" }}>
+        جاري التحميل...
+      </p>
+    </div>
+  );
+}
 
 // Teacher: full dedicated page. Student: redirect to dashboard tab
 function NotificationsRoute() {
@@ -39,24 +68,26 @@ export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Layout><Landing /></Layout>} />
-          <Route path="/login" element={<Layout><Login /></Layout>} />
-          <Route path="/register" element={<Layout><Register /></Layout>} />
-          <Route path="/register-teacher" element={<Layout><TeacherRegister /></Layout>} />
-          <Route path="/students" element={<Layout><ProtectedRoute><TeacherStudents /></ProtectedRoute></Layout>} />
-          <Route path="/students/add" element={<Layout><ProtectedRoute><TeacherAddStudent /></ProtectedRoute></Layout>} />
-          <Route path="/groups" element={<Layout><ProtectedRoute><TeacherGroups /></ProtectedRoute></Layout>} />
-          <Route path="/live-sessions" element={<Layout><ProtectedRoute><TeacherLiveSessions /></ProtectedRoute></Layout>} />
-          <Route path="/library" element={<Layout><ProtectedRoute><TeacherLibrary /></ProtectedRoute></Layout>} />
-          <Route path="/quizzes" element={<Layout><ProtectedRoute><TeacherQuizzes /></ProtectedRoute></Layout>} />
-          <Route path="/profile" element={<Layout><ProtectedRoute><TeacherProfileSettings /></ProtectedRoute></Layout>} />
-          <Route path="/reports" element={<Layout><ProtectedRoute><TeacherReports /></ProtectedRoute></Layout>} />
-          <Route path="/finances" element={<Layout><ProtectedRoute><TeacherFinances /></ProtectedRoute></Layout>} />
-          <Route path="/notifications" element={<Layout><ProtectedRoute><NotificationsRoute /></ProtectedRoute></Layout>} />
-          <Route path="/support-tickets" element={<Layout><ProtectedRoute><SupportRoute /></ProtectedRoute></Layout>} />
-          <Route path="/dashboard" element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/"                element={<Layout><Landing /></Layout>} />
+            <Route path="/login"           element={<Layout><Login /></Layout>} />
+            <Route path="/register"        element={<Layout><Register /></Layout>} />
+            <Route path="/register-teacher" element={<Layout><TeacherRegister /></Layout>} />
+            <Route path="/students"        element={<Layout><ProtectedRoute><TeacherStudents /></ProtectedRoute></Layout>} />
+            <Route path="/students/add"    element={<Layout><ProtectedRoute><TeacherAddStudent /></ProtectedRoute></Layout>} />
+            <Route path="/groups"          element={<Layout><ProtectedRoute><TeacherGroups /></ProtectedRoute></Layout>} />
+            <Route path="/live-sessions"   element={<Layout><ProtectedRoute><TeacherLiveSessions /></ProtectedRoute></Layout>} />
+            <Route path="/library"         element={<Layout><ProtectedRoute><TeacherLibrary /></ProtectedRoute></Layout>} />
+            <Route path="/quizzes"         element={<Layout><ProtectedRoute><TeacherQuizzes /></ProtectedRoute></Layout>} />
+            <Route path="/profile"         element={<Layout><ProtectedRoute><TeacherProfileSettings /></ProtectedRoute></Layout>} />
+            <Route path="/reports"         element={<Layout><ProtectedRoute><TeacherReports /></ProtectedRoute></Layout>} />
+            <Route path="/finances"        element={<Layout><ProtectedRoute><TeacherFinances /></ProtectedRoute></Layout>} />
+            <Route path="/notifications"   element={<Layout><ProtectedRoute><NotificationsRoute /></ProtectedRoute></Layout>} />
+            <Route path="/support-tickets" element={<Layout><ProtectedRoute><SupportRoute /></ProtectedRoute></Layout>} />
+            <Route path="/dashboard"       element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </HashRouter>
   );

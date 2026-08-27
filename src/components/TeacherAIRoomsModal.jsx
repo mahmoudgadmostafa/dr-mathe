@@ -288,7 +288,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
           {/* TAB 1: ADD / EDIT FORM */}
           {activeTab === "add" && (
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 {/* Title */}
                 <div>
                   <label style={{ display: "block", fontSize: "0.86rem", fontWeight: 800, color: "#cbd5e1", marginBottom: "5px" }}>
@@ -323,7 +323,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "1rem" }}>
                 {/* Icon Emoji */}
                 <div>
                   <label style={{ display: "block", fontSize: "0.86rem", fontWeight: 800, color: "#cbd5e1", marginBottom: "5px" }}>

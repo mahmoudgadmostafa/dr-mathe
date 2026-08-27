@@ -158,7 +158,7 @@ export default function TeacherProfileSettings() {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.2rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "1.2rem" }}>
             <div>
               <label style={{ display: "block", fontWeight: 700, marginBottom: "0.4rem", fontSize: "0.9rem" }}>
                 ✉️ البريد الإلكتروني
@@ -229,7 +229,7 @@ export default function TeacherProfileSettings() {
             </div>
 
             {/* New passcode + confirm */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "1rem" }}>
               <div>
                 <label style={{ display: "block", fontWeight: 700, marginBottom: "0.3rem", fontSize: "0.85rem" }}>
                   كلمة المرور الجديدة
@@ -288,7 +288,7 @@ export default function TeacherProfileSettings() {
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.2rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "1.2rem" }}>
             <div>
               <label style={{ display: "block", fontWeight: 700, marginBottom: "0.4rem", fontSize: "0.9rem" }}>
                 📚 التخصص / المادة

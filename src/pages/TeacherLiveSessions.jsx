@@ -275,7 +275,7 @@ export default function TeacherLiveSessions() {
       {!loading && activeSessions.length > 0 && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
           gap: "1.25rem",
           marginTop: "2rem"
         }}>

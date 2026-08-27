@@ -505,7 +505,7 @@ export default function TeacherQuizzes() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
                 gap: "1.25rem",
               }}
             >
@@ -670,7 +670,7 @@ export default function TeacherQuizzes() {
               🛠️ اختر طريقة بناء وعرض الاختبار للطالب:
             </label>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "1rem" }}>
               {/* Option 1: Native Interactive with Images */}
               <div
                 onClick={() => setQuizMode("native")}
@@ -739,7 +739,7 @@ export default function TeacherQuizzes() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
               gap: "1.2rem",
               marginBottom: "2rem",
               background: "rgba(15, 23, 42, 0.5)",
@@ -954,7 +954,7 @@ export default function TeacherQuizzes() {
                         marginBottom: "1.2rem",
                       }}
                     >
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem", alignItems: "center" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem", alignItems: "center" }}>
                         <div>
                           <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, marginBottom: "0.3rem", color: "#a5b4fc" }}>
                             🖼️ رابط صورة السؤال / الشكل الهندسي (اختياري)
@@ -1045,7 +1045,7 @@ export default function TeacherQuizzes() {
                         الخيارات والإجابات (يمكن إدخال نص و/أو صورة لكل خيار):
                       </label>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "1rem" }}>
                         {q.options.map((opt, optIdx) => {
                           const isCorrect = q.correctAnswer === optIdx;
                           const optImg = q.optionImages?.[optIdx] || "";

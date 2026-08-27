@@ -259,9 +259,9 @@ export default function StudentDashboard() {
   const [aiRooms, setAiRooms] = useState([]);
   const [activeAIRoomModal, setActiveAIRoomModal] = useState(null);
 
-  // Timer ticker to evaluate session states every 3 seconds
+  // Timer ticker to evaluate session states every 10 seconds (reduced re-renders)
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 3000);
+    const timer = setInterval(() => setNow(new Date()), 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -283,9 +283,10 @@ export default function StudentDashboard() {
     return liveSessions.filter((s) => !getLiveSessionTiming(s, now).isEnded);
   }, [liveSessions, now]);
 
-  // Listen to Live Sessions in real time
+  // Listen to Live Sessions — only when home or live tab is active
   useEffect(() => {
-    if (!isSubscriberActive) return;
+    const isRelevantTab = activeMainTab === "home" || activeMainTab === "live";
+    if (!isSubscriberActive || !isRelevantTab) return;
     const q = query(collection(db, "live_sessions"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
@@ -301,11 +302,11 @@ export default function StudentDashboard() {
       (err) => console.error("Error loading student live sessions:", err)
     );
     return () => unsubscribe();
-  }, [isSubscriberActive, studentGrade, studentGroup]);
+  }, [isSubscriberActive, studentGrade, studentGroup, activeMainTab]);
 
-  // Listen to Library Items in real time
+  // Listen to Library Items — only when library tab is active
   useEffect(() => {
-    if (!isSubscriberActive) return;
+    if (!isSubscriberActive || activeMainTab !== "library") return;
     const q = query(collection(db, "library_items"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
@@ -321,11 +322,11 @@ export default function StudentDashboard() {
       (err) => console.error("Error loading student library items:", err)
     );
     return () => unsubscribe();
-  }, [isSubscriberActive, studentGrade, studentGroup]);
+  }, [isSubscriberActive, studentGrade, studentGroup, activeMainTab]);
 
-  // Listen to Active Quizzes in real time
+  // Listen to Active Quizzes — only when quizzes tab is active
   useEffect(() => {
-    if (!isSubscriberActive) return;
+    if (!isSubscriberActive || activeMainTab !== "quizzes") return;
     const q = query(collection(db, "quizzes"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
@@ -342,11 +343,11 @@ export default function StudentDashboard() {
       (err) => console.error("Error loading quizzes:", err)
     );
     return () => unsubscribe();
-  }, [isSubscriberActive, studentGrade, studentGroup]);
+  }, [isSubscriberActive, studentGrade, studentGroup, activeMainTab]);
 
-  // Listen to My Quiz Submissions in real time
+  // Listen to My Quiz Submissions — only when quizzes tab is active
   useEffect(() => {
-    if (!isSubscriberActive || !studentUid) return;
+    if (!isSubscriberActive || !studentUid || activeMainTab !== "quizzes") return;
     const q = query(collection(db, "quiz_submissions"), orderBy("submittedAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
@@ -359,10 +360,11 @@ export default function StudentDashboard() {
       (err) => console.error("Error loading quiz submissions:", err)
     );
     return () => unsubscribe();
-  }, [isSubscriberActive, studentUid]);
+  }, [isSubscriberActive, studentUid, activeMainTab]);
 
-  // Listen to AI Assistant Rooms in real time
+  // Listen to AI Assistant Rooms — only when home tab is active
   useEffect(() => {
+    if (activeMainTab !== "home") return;
     const q = query(collection(db, "ai_rooms"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
@@ -375,7 +377,7 @@ export default function StudentDashboard() {
       (err) => console.error("Error loading AI rooms:", err)
     );
     return () => unsubscribe();
-  }, [studentGrade]);
+  }, [studentGrade, activeMainTab]);
 
   // Activity logger
   const handleLogActivity = async (type, itemTitle, itemId, extra = {}) => {
@@ -528,7 +530,7 @@ export default function StudentDashboard() {
                   <p style={{ color: "#cbd5e1", margin: "0.6rem 0 0 0", fontWeight: 700, fontSize: "1rem" }}>لا توجد حصص مباشرة مجدولة حالياً.</p>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.25rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "1.25rem" }}>
                   {activeLiveSessions.map((sess) => {
                     const plat = PLATFORMS_MAP[sess.platform] || PLATFORMS_MAP.custom;
                     const timing = getLiveSessionTiming(sess, now);
@@ -669,7 +671,7 @@ export default function StudentDashboard() {
                   <p style={{ color: "#cbd5e1", margin: "0.6rem 0 0 0", fontWeight: 700, fontSize: "1rem" }}>لا توجد ملفات أو شروحات مضافة في هذا الفرز حالياً.</p>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(285px, 1fr))", gap: "1.25rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "1.25rem" }}>
                   {filteredLibraryItems.map((item) => (
                     <div
                       key={item.id}
@@ -742,7 +744,7 @@ export default function StudentDashboard() {
                   <p style={{ color: "#cbd5e1", margin: "0.6rem 0 0 0", fontWeight: 700, fontSize: "1rem" }}>لا توجد اختبارات مضافة لمجموعتك حالياً.</p>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "1.25rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "1.25rem" }}>
                   {quizzes.map((quiz) => {
                     const sub = mySubmissions.find((s) => s.quizId === quiz.id);
                     const isCompleted = Boolean(sub);
@@ -837,7 +839,7 @@ export default function StudentDashboard() {
                   📋 البيانات الشخصية والدراسية
                 </h3>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                   {[
                     { label: "👤 اسم الطالب الكامل", val: userProfile?.fullName || "—", color: "#ffffff" },
                     { label: "✉️ البريد الإلكتروني", val: userProfile?.email || "—", color: "#38bdf8" },

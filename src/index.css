@@ -670,7 +670,7 @@ body::before {
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 2rem;
 }
 
@@ -998,7 +998,7 @@ body::before {
 /* ── Stats Grid ── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
   gap: 1.35rem;
 }
 
@@ -1058,7 +1058,7 @@ body::before {
 /* ── Nav Cards Grid ── */
 .nav-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 1.35rem;
 }
 
@@ -3829,7 +3829,7 @@ textarea {
 
 .contact-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 24px;
 }
 
@@ -3992,5 +3992,225 @@ textarea {
   .footer-contact-section {
     flex-direction: column;
     align-items: center;
+  }
+}
+
+/* ==========================================================================
+   ULTIMATE RESPONSIVE & DYNAMIC MASTER RULES (All Screens: 320px to 4K)
+   ========================================================================== */
+
+/* Universal flex/grid text safety to prevent horizontal page explosion */
+.dashboard-modern,
+.page-wrapper,
+.app-main-content,
+.app-main-area-with-header,
+.glass,
+.card,
+.modal-card-fix,
+.stat-card,
+.nav-card {
+  min-width: 0;
+}
+
+/* Fluid responsive grids */
+.responsive-grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1.25rem;
+}
+
+.responsive-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 1rem;
+}
+
+.responsive-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 1rem;
+}
+
+/* Responsive Table Wrapper */
+.table-responsive-wrapper,
+.table-responsive-container,
+.recent-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+  margin: 0.75rem 0;
+}
+
+.table-responsive-wrapper table,
+.table-responsive-container table {
+  min-width: 600px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Global Dynamic Modals */
+.modal-overlay-fix {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.modal-card-fix {
+  position: relative;
+  width: 100%;
+  max-width: 650px;
+  max-height: calc(100dvh - 2rem);
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.modal-header-pinned {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.modal-body-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer-pinned {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+/* Mobile Small Devices (<= 480px) */
+@media screen and (max-width: 480px) {
+  html, body {
+    font-size: 14px;
+  }
+
+  .modal-overlay-fix {
+    padding: 0.25rem !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-card-fix {
+    max-height: 95dvh !important;
+    max-height: 95vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    width: 100% !important;
+  }
+
+  .modal-header-pinned {
+    padding: 0.9rem 1rem !important;
+  }
+
+  .modal-body-scroll {
+    padding: 1rem 0.85rem !important;
+  }
+
+  .modal-footer-pinned {
+    padding: 0.85rem 1rem !important;
+    justify-content: stretch !important;
+  }
+
+  .modal-footer-pinned > * {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .dashboard-banner {
+    padding: 1rem !important;
+  }
+
+  .dashboard-welcome {
+    font-size: 1.15rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .dashboard-role {
+    font-size: 0.8rem !important;
+  }
+
+  .header-floating-rounded {
+    padding: 0.35rem 0.6rem !important;
+    margin: 0.35rem auto !important;
+  }
+
+  .header-left-actions {
+    gap: 0.35rem !important;
+  }
+
+  .header-action-btn-modern {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+
+  .logout-btn-label {
+    display: none !important;
+  }
+}
+
+/* Extra Small Screens (<= 360px: e.g. Galaxy Fold, iPhone SE 1st) */
+@media screen and (max-width: 360px) {
+  .dashboard-banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nav-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tablet Portrait & Landscape (769px to 1024px) */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-modern {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  }
+}
+
+/* Ultra-Wide Desktop Screens (>= 1600px) */
+@media screen and (min-width: 1600px) {
+  .dashboard-modern,
+  .page-wrapper.container,
+  .site-root-layout .app-main-content {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

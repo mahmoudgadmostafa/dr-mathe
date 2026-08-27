@@ -187,14 +187,20 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // 2. Fallback: Search all Firestore docs case-insensitively for matching email or phone
-    const usersSnap = await getDocs(collection(db, "users"));
-    const matchingDoc = usersSnap.docs.find((d) => {
-      const data = d.data();
-      const userEmail = (data.email || "").trim().toLowerCase();
-      const userPhone = (data.phone || "").trim();
-      return userEmail === input || userPhone === input;
-    });
+    // 2. Fallback: Targeted Firestore queries by email or phone (avoids full collection scan)
+    let matchingDoc = null;
+    const emailQuery = query(collection(db, "users"), where("email", "==", input));
+    const emailSnap = await getDocs(emailQuery);
+    if (!emailSnap.empty) {
+      matchingDoc = emailSnap.docs[0];
+    }
+    if (!matchingDoc) {
+      const phoneQuery = query(collection(db, "users"), where("phone", "==", input));
+      const phoneSnap = await getDocs(phoneQuery);
+      if (!phoneSnap.empty) {
+        matchingDoc = phoneSnap.docs[0];
+      }
+    }
 
     if (matchingDoc) {
       const userData = matchingDoc.data();

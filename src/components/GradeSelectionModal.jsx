@@ -220,7 +220,7 @@ export default function GradeSelectionModal({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))",
               gap: "0.6rem",
               marginBottom: "1.35rem",
             }}
@@ -281,7 +281,7 @@ export default function GradeSelectionModal({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))",
                 gap: "0.65rem",
               }}
             >

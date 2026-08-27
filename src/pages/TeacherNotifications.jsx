@@ -253,7 +253,7 @@ export default function TeacherNotifications() {
       </div>
 
       {/* Main Grid: Compose Form + Notification List */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1.5rem", marginTop: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: "1.5rem", marginTop: "1.5rem" }}>
         {/* Compose Notification Form */}
         <form onSubmit={handleSendNotification} className="glass" style={{ padding: "1.5rem", borderRadius: "var(--radius-lg)" }}>
           <h3 className="font-heading" style={{ margin: "0 0 1.2rem 0", fontSize: "1.15rem", color: "#0f172a" }}>

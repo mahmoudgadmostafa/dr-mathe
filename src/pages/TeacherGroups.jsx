@@ -415,7 +415,7 @@ export default function TeacherGroups() {
                                 </table>
                               </div>
                             ) : (
-                              <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "0.85rem" }}>
+                              <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 250px), 1fr))", gap: "0.85rem" }}>
                                 {groupStudents.map((s) => (
                                   <StudentCard key={s.id} student={s} viewMode="card" />
                                 ))}
@@ -508,7 +508,7 @@ export default function TeacherGroups() {
                             </table>
                           </div>
                         ) : (
-                          <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "0.85rem" }}>
+                          <div className="student-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 250px), 1fr))", gap: "0.85rem" }}>
                             {groupStudents.map((s) => (
                               <StudentCard key={s.id} student={s} viewMode="card" />
                             ))}
