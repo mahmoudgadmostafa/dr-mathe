@@ -2385,6 +2385,130 @@ body {
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   STUDENT AI ROOM BADGE BUTTON (المستطيل التفاعلي للذكاء الاصطناعي)
+   ========================================================================== */
+.student-ai-room-badge-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(2, 132, 199, 0.95));
+  border: 1.5px solid rgba(216, 180, 254, 0.6);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.45), 0 0 15px rgba(56, 189, 248, 0.35);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  user-select: none;
+  animation: aiButtonAura 3.5s ease-in-out infinite;
+}
+
+.student-ai-room-badge-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.65), 0 0 22px rgba(56, 189, 248, 0.55);
+  border-color: #ffffff;
+}
+
+.ai-room-pulse-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 65%);
+  pointer-events: none;
+  animation: rotateAura 6s linear infinite;
+}
+
+@keyframes aiButtonAura {
+  0%, 100% { box-shadow: 0 4px 18px rgba(124, 58, 237, 0.45), 0 0 15px rgba(56, 189, 248, 0.35); }
+  50% { box-shadow: 0 6px 26px rgba(168, 85, 247, 0.7), 0 0 20px rgba(56, 189, 248, 0.6); }
+}
+
+@keyframes rotateAura {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ai-room-btn-title {
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.ai-room-sparkle-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fef08a;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  text-shadow: 0 0 8px rgba(254, 240, 138, 0.6);
+}
+
+/* ==========================================================================
+   UNIVERSAL MODALS & DIALOGS (نوافذ منبثقة متجاوبة)
+   ========================================================================== */
+.modal-overlay-fix {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  overflow-y: auto !important;
+}
+
+.modal-card-fix {
+  position: relative !important;
+  width: 100% !important;
+  max-height: 92vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8) !important;
+  z-index: 100000 !important;
+  margin: auto !important;
+}
+
+.modal-header-pinned {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 1rem 1.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  flex-shrink: 0 !important;
+}
+
+.modal-body-scroll {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 1.5rem !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.modal-footer-pinned {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  padding: 1rem 1.5rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  flex-shrink: 0 !important;
+}
+
 @media screen and (max-width: 768px) {
   .header-floating-rounded {
     width: calc(100% - 1rem) !important;

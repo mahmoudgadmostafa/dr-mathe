@@ -16,7 +16,7 @@ export default function Landing() {
               <span className="text-gradient">منصة الدكتور</span> فى الرياضيات
             </h1>
             <p className="hero-subtitle">
-              وجهتك الأولى لاحتراف الرياضيات بأسلوب تفاعلي، مبسط، وعصري. 
+              وجهتك الأولى لاحتراف الرياضيات بأسلوب تفاعلي، مبسط، وعصري.
               تعلم بشغف، تدرب بذكاء، وحقق التفوق الذي تطمح إليه في جميع المراحل التعليمية.
             </p>
             <div className="hero-buttons">
@@ -31,9 +31,9 @@ export default function Landing() {
           <div className="hero-image-container">
             <div className="hero-logo-wrapper">
               <div className="hero-logo-aura"></div>
-              <img 
-                src="/logo-circle.png" 
-                alt="شعار منصة الدكتور فى الرياضيات" 
+              <img
+                src="/logo-circle.png"
+                alt="شعار منصة الدكتور فى الرياضيات"
                 className="hero-logo-animated"
               />
             </div>
@@ -156,7 +156,7 @@ export default function Landing() {
         <h2 className="font-heading">جاهز لتحقيق التميز في الرياضيات؟</h2>
         <p>انضم الآن لمئات الطلاب الذين غيروا نظرتهم للرياضيات واكتشف متعة التعلم.</p>
         <Link to="/register" className="button button-primary cta-btn">
-          أنشئ حسابك 
+          أنشئ حسابك
         </Link>
       </section>
     </div>

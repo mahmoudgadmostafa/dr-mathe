@@ -4,11 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { getSubscriptionInfo } from "../components/StudentCard";
+import TeacherAIRoomsModal from "../components/TeacherAIRoomsModal";
 
 export default function TeacherDashboard() {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
 
+  const [showAIRoomsModal, setShowAIRoomsModal] = useState(false);
   const [stats, setStats] = useState({
     totalStudents: 0,
     activeSubscribers: 0,
@@ -102,9 +104,32 @@ export default function TeacherDashboard() {
             <p className="dashboard-role">مدير المنصة والمعلم | منصة الدكتور فى الرياضيات</p>
           </div>
         </div>
-        <Link to="/students/add" className="button button-primary">
-          + إضافة طالب جديد
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => setShowAIRoomsModal(true)}
+            className="button button-sm"
+            style={{
+              background: "linear-gradient(135deg, #7c3aed, #0284c7)",
+              color: "#ffffff",
+              fontWeight: 800,
+              borderRadius: "12px",
+              padding: "0.5rem 1rem",
+              boxShadow: "0 4px 15px rgba(124, 58, 237, 0.35)",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.45rem",
+            }}
+          >
+            <span>🤖</span>
+            <span>غرف الذكاء الاصطناعي (AI)</span>
+          </button>
+
+          <Link to="/students/add" className="button button-sm button-primary" style={{ borderRadius: "12px", padding: "0.5rem 1rem", fontWeight: 800 }}>
+            + إضافة طالب جديد
+          </Link>
+        </div>
       </div>
 
       {/* Live Real-time Statistics */}
@@ -209,6 +234,12 @@ export default function TeacherDashboard() {
           </div>
         )}
       </div>
+
+      {/* Teacher AI Rooms Management Modal */}
+      <TeacherAIRoomsModal
+        isOpen={showAIRoomsModal}
+        onClose={() => setShowAIRoomsModal(false)}
+      />
     </div>
   );
 }
