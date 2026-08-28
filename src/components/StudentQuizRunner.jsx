@@ -224,9 +224,12 @@ export default function StudentQuizRunner({ quiz, studentProfile, onClose, onCom
             <div
               style={{
                 display: "inline-flex",
-                gap: "2rem",
-                margin: "1.5rem 0",
-                padding: "1.2rem 2.5rem",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: "1.5rem",
+                margin: "1.5rem auto",
+                padding: "1rem 1.8rem",
+                maxWidth: "100%",
                 borderRadius: "20px",
                 background: submissionResult.isPassed ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
                 border: `1px solid ${submissionResult.isPassed ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
@@ -570,7 +573,7 @@ export default function StudentQuizRunner({ quiz, studentProfile, onClose, onCom
             </div>
 
             {/* Bottom Footer Navigation */}
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
               <button
                 disabled={currentIdx === 0}
                 onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}

@@ -14,6 +14,21 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
+const ALL_GRADES = [
+  { id: "الصف الأول الثانوي", label: "الصف الأول الثانوي", stage: "ثانوي", icon: "📘" },
+  { id: "الصف الثاني الثانوي", label: "الصف الثاني الثانوي", stage: "ثانوي", icon: "📗" },
+  { id: "الصف الثالث الثانوي", label: "الصف الثالث الثانوي", stage: "ثانوي", icon: "📕" },
+  { id: "الصف الأول الإعدادي", label: "الصف الأول الإعدادي", stage: "إعدادي", icon: "📙" },
+  { id: "الصف الثاني الإعدادي", label: "الصف الثاني الإعدادي", stage: "إعدادي", icon: "📙" },
+  { id: "الصف الثالث الإعدادي", label: "الصف الثالث الإعدادي", stage: "إعدادي", icon: "📙" },
+  { id: "الصف الأول الابتدائي", label: "الصف الأول الابتدائي", stage: "ابتدائي", icon: "📓" },
+  { id: "الصف الثاني الابتدائي", label: "الصف الثاني الابتدائي", stage: "ابتدائي", icon: "📓" },
+  { id: "الصف الثالث الابتدائي", label: "الصف الثالث الابتدائي", stage: "ابتدائي", icon: "📓" },
+  { id: "الصف الرابع الابتدائي", label: "الصف الرابع الابتدائي", stage: "ابتدائي", icon: "📓" },
+  { id: "الصف الخامس الابتدائي", label: "الصف الخامس الابتدائي", stage: "ابتدائي", icon: "📓" },
+  { id: "الصف السادس الابتدائي", label: "الصف السادس الابتدائي", stage: "ابتدائي", icon: "📓" },
+];
+
 export default function TeacherAIRoomsModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState("add"); // "add" or "list"
   const [rooms, setRooms] = useState([]);
@@ -27,7 +42,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("🤖");
   const [badgeText, setBadgeText] = useState("مساعد ذكي ⚡");
-  const [targetGrade, setTargetGrade] = useState("all");
+  const [targetGrades, setTargetGrades] = useState(["all"]);
   const [isActive, setIsActive] = useState(true);
 
   // Fetch AI rooms in real-time
@@ -55,7 +70,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
     setDescription("");
     setIcon("🤖");
     setBadgeText("مساعد ذكي ⚡");
-    setTargetGrade("all");
+    setTargetGrades(["all"]);
     setIsActive(true);
     setEditingRoomId(null);
   };
@@ -67,9 +82,64 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
     setDescription(room.description || "");
     setIcon(room.icon || "🤖");
     setBadgeText(room.badgeText || "مساعد ذكي ⚡");
-    setTargetGrade(room.targetGrade || "all");
+
+    if (Array.isArray(room.targetGrades) && room.targetGrades.length > 0) {
+      setTargetGrades(room.targetGrades);
+    } else if (room.targetGrade && room.targetGrade !== "all" && room.targetGrade !== "جميع الصفوف الدراسية") {
+      setTargetGrades([room.targetGrade]);
+    } else {
+      setTargetGrades(["all"]);
+    }
+
     setIsActive(room.isActive !== false);
     setActiveTab("add");
+  };
+
+  const isAllSelected =
+    targetGrades.includes("all") ||
+    targetGrades.includes("جميع الصفوف الدراسية") ||
+    targetGrades.length === 0;
+
+  const handleSelectAll = () => {
+    setTargetGrades(["all"]);
+  };
+
+  const handleToggleGrade = (gradeId) => {
+    if (isAllSelected) {
+      setTargetGrades([gradeId]);
+      return;
+    }
+    if (targetGrades.includes(gradeId)) {
+      const next = targetGrades.filter((g) => g !== gradeId);
+      setTargetGrades(next.length === 0 ? ["all"] : next);
+    } else {
+      const next = [...targetGrades.filter((g) => g !== "all"), gradeId];
+      if (next.length === ALL_GRADES.length) {
+        setTargetGrades(["all"]);
+      } else {
+        setTargetGrades(next);
+      }
+    }
+  };
+
+  const handleSelectStage = (stageName) => {
+    const stageGradeIds = ALL_GRADES.filter((g) => g.stage === stageName).map((g) => g.id);
+    if (isAllSelected) {
+      setTargetGrades(stageGradeIds);
+      return;
+    }
+    const allStageSelected = stageGradeIds.every((id) => targetGrades.includes(id));
+    if (allStageSelected) {
+      const next = targetGrades.filter((id) => !stageGradeIds.includes(id));
+      setTargetGrades(next.length === 0 ? ["all"] : next);
+    } else {
+      const merged = Array.from(new Set([...targetGrades.filter((g) => g !== "all"), ...stageGradeIds]));
+      if (merged.length === ALL_GRADES.length) {
+        setTargetGrades(["all"]);
+      } else {
+        setTargetGrades(merged);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -85,6 +155,9 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
       cleanUrl = "https://" + cleanUrl;
     }
 
+    const finalGrades = isAllSelected ? ["all"] : targetGrades;
+    const primaryGrade = isAllSelected ? "all" : finalGrades.join("، ");
+
     setSaving(true);
     try {
       if (editingRoomId) {
@@ -96,7 +169,8 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
           description: description.trim(),
           icon: icon.trim() || "🤖",
           badgeText: badgeText.trim() || "مساعد ذكي ⚡",
-          targetGrade,
+          targetGrades: finalGrades,
+          targetGrade: primaryGrade,
           isActive,
           updatedAt: serverTimestamp(),
         });
@@ -109,7 +183,8 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
           description: description.trim(),
           icon: icon.trim() || "🤖",
           badgeText: badgeText.trim() || "مساعد ذكي ⚡",
-          targetGrade,
+          targetGrades: finalGrades,
+          targetGrade: primaryGrade,
           isActive: true,
           createdAt: serverTimestamp(),
         });
@@ -188,6 +263,8 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: "0.75rem",
             flexShrink: 0,
           }}
         >
@@ -232,6 +309,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             gap: "0.5rem",
             padding: "0.75rem 1.5rem 0.25rem",
             background: "rgba(15, 23, 42, 0.5)",
@@ -323,7 +401,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "1rem" }}>
                 {/* Icon Emoji */}
                 <div>
                   <label style={{ display: "block", fontSize: "0.86rem", fontWeight: 800, color: "#cbd5e1", marginBottom: "5px" }}>
@@ -358,24 +436,153 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
                     style={{ width: "100%", borderRadius: "12px", background: "rgba(15, 23, 42, 0.8)", color: "#fff", border: "1.5px solid rgba(168, 85, 247, 0.4)", padding: "0.65rem 0.9rem" }}
                   />
                 </div>
+              </div>
 
-                {/* Target Grade */}
-                <div>
-                  <label style={{ display: "block", fontSize: "0.86rem", fontWeight: 800, color: "#cbd5e1", marginBottom: "5px" }}>
-                    المرحلة المستهدفة
+              {/* Target Grades Multi-Select Section */}
+              <div
+                style={{
+                  background: "rgba(15, 23, 42, 0.75)",
+                  border: "1.5px solid rgba(168, 85, 247, 0.4)",
+                  borderRadius: "16px",
+                  padding: "1rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.85rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.6rem" }}>
+                  <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <span>🎯</span>
+                    <span>الصفوف والمراحل الدراسية المستهدفة (حدد صف أو أكثر):</span>
+                    <span
+                      style={{
+                        fontSize: "0.74rem",
+                        padding: "2px 9px",
+                        borderRadius: "10px",
+                        background: isAllSelected ? "rgba(56, 189, 248, 0.2)" : "rgba(168, 85, 247, 0.25)",
+                        color: isAllSelected ? "#38bdf8" : "#c084fc",
+                        border: isAllSelected ? "1px solid #38bdf8" : "1px solid #c084fc",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {isAllSelected ? "محدد: جميع الصفوف والمراحل 🌐" : `محدد: ${targetGrades.length} صفوف 📚`}
+                    </span>
                   </label>
-                  <select
-                    value={targetGrade}
-                    onChange={(e) => setTargetGrade(e.target.value)}
-                    className="form-input"
-                    style={{ width: "100%", borderRadius: "12px", background: "rgba(15, 23, 42, 0.8)", color: "#fff", border: "1.5px solid rgba(168, 85, 247, 0.4)", padding: "0.65rem 0.9rem" }}
-                  >
-                    <option value="all">جميع الصفوف والمراحل 🌐</option>
-                    <option value="الصف الأول الثانوي">الصف الأول الثانوي 📘</option>
-                    <option value="الصف الثاني الثانوي">الصف الثاني الثانوي 📗</option>
-                    <option value="الصف الثالث الثانوي">الصف الثالث الثانوي 📕</option>
-                    <option value="الصف الثالث الإعدادي">الصف الثالث الإعدادي 📙</option>
-                  </select>
+
+                  {/* Stage Quick Selection Buttons */}
+                  <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="button button-sm"
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "0.25rem 0.6rem",
+                        borderRadius: "8px",
+                        background: isAllSelected ? "linear-gradient(135deg, #0284c7, #0369a1)" : "rgba(255, 255, 255, 0.08)",
+                        color: "#fff",
+                        border: isAllSelected ? "1px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.15)",
+                        fontWeight: 800,
+                      }}
+                    >
+                      🌐 جميع الصفوف
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStage("ثانوي")}
+                      className="button button-sm"
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "0.25rem 0.6rem",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        color: "#cbd5e1",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      📘 الثانوي
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStage("إعدادي")}
+                      className="button button-sm"
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "0.25rem 0.6rem",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        color: "#cbd5e1",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      📙 الإعدادي
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStage("ابتدائي")}
+                      className="button button-sm"
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "0.25rem 0.6rem",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        color: "#cbd5e1",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      📓 الابتدائي
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {ALL_GRADES.map((grade) => {
+                    const isSelected = isAllSelected || targetGrades.includes(grade.id);
+                    return (
+                      <div
+                        key={grade.id}
+                        onClick={() => handleToggleGrade(grade.id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          padding: "0.5rem 0.7rem",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          background: isSelected ? "rgba(124, 58, 237, 0.25)" : "rgba(30, 41, 59, 0.4)",
+                          border: isSelected ? "1.5px solid #a855f7" : "1px solid rgba(255, 255, 255, 0.1)",
+                          boxShadow: isSelected ? "0 2px 10px rgba(168, 85, 247, 0.2)" : "none",
+                          userSelect: "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}} // Handled by container onClick
+                          style={{
+                            cursor: "pointer",
+                            width: "15px",
+                            height: "15px",
+                            accentColor: "#a855f7",
+                          }}
+                        />
+                        <span style={{ fontSize: "0.95rem" }}>{grade.icon}</span>
+                        <span style={{ fontSize: "0.8rem", fontWeight: isSelected ? 800 : 600, color: isSelected ? "#ffffff" : "#94a3b8" }}>
+                          {grade.label}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -512,18 +719,54 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
                             >
                               {room.badgeText || "مساعد ذكي"}
                             </span>
-                            <span
-                              style={{
-                                fontSize: "0.72rem",
-                                fontWeight: 700,
-                                background: room.targetGrade === "all" ? "rgba(2, 132, 199, 0.25)" : "rgba(16, 185, 129, 0.25)",
-                                color: room.targetGrade === "all" ? "#38bdf8" : "#34d399",
-                                padding: "2px 9px",
-                                borderRadius: "12px",
-                              }}
-                            >
-                              {room.targetGrade === "all" ? "لجميع المراحل" : room.targetGrade}
-                            </span>
+                            {(() => {
+                              const isAll =
+                                !room.targetGrades ||
+                                room.targetGrades.includes("all") ||
+                                room.targetGrades.includes("جميع الصفوف الدراسية") ||
+                                room.targetGrade === "all";
+                              if (isAll) {
+                                return (
+                                  <span
+                                    style={{
+                                      fontSize: "0.72rem",
+                                      fontWeight: 800,
+                                      background: "rgba(2, 132, 199, 0.25)",
+                                      color: "#38bdf8",
+                                      padding: "2px 9px",
+                                      borderRadius: "12px",
+                                      border: "1px solid rgba(56, 189, 248, 0.35)",
+                                    }}
+                                  >
+                                    🌐 لجميع المراحل
+                                  </span>
+                                );
+                              }
+                              const gradesList =
+                                Array.isArray(room.targetGrades) && room.targetGrades.length > 0
+                                  ? room.targetGrades
+                                  : [room.targetGrade];
+                              return (
+                                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                                  {gradesList.map((g, idx) => (
+                                    <span
+                                      key={idx}
+                                      style={{
+                                        fontSize: "0.72rem",
+                                        fontWeight: 800,
+                                        background: "rgba(16, 185, 129, 0.2)",
+                                        color: "#34d399",
+                                        padding: "2px 8px",
+                                        borderRadius: "12px",
+                                        border: "1px solid rgba(52, 211, 153, 0.35)",
+                                      }}
+                                    >
+                                      {g}
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                           {room.description && (
                             <p style={{ margin: "4px 0 0 0", fontSize: "0.84rem", color: "#cbd5e1", fontWeight: 600 }}>
@@ -534,7 +777,7 @@ export default function TeacherAIRoomsModal({ isOpen, onClose }) {
                             href={room.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ fontSize: "0.78rem", color: "#38bdf8", direction: "ltr", display: "inline-block", marginTop: "3px", textDecoration: "none" }}
+                            style={{ fontSize: "0.78rem", color: "#38bdf8", direction: "ltr", display: "inline-block", marginTop: "3px", textDecoration: "none", wordBreak: "break-all", maxWidth: "100%" }}
                           >
                             🔗 {room.url}
                           </a>

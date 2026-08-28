@@ -10,7 +10,6 @@ import { getQuizEmbedUrl } from "./TeacherQuizzes";
 import StudentQuizRunner from "../components/StudentQuizRunner";
 import StudentNotifications from "./StudentNotifications";
 import SupportTickets from "./SupportTickets";
-import StudentAIRoomModal from "../components/StudentAIRoomModal";
 
 const PLATFORMS_MAP = {
   google_meet: { name: "Google Meet", icon: "🟢", color: "#00ac47" },
@@ -257,7 +256,6 @@ export default function StudentDashboard() {
   const [quizzes, setQuizzes] = useState([]);
   const [mySubmissions, setMySubmissions] = useState([]);
   const [aiRooms, setAiRooms] = useState([]);
-  const [activeAIRoomModal, setActiveAIRoomModal] = useState(null);
 
   // Timer ticker to evaluate session states every 10 seconds (reduced re-renders)
   useEffect(() => {
@@ -371,7 +369,18 @@ export default function StudentDashboard() {
       (snapshot) => {
         const list = snapshot.docs
           .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((r) => r.isActive !== false && (r.targetGrade === "all" || !r.targetGrade || r.targetGrade === studentGrade));
+          .filter((r) => {
+            if (r.isActive === false) return false;
+            // Check targetGrades array
+            if (Array.isArray(r.targetGrades) && r.targetGrades.length > 0) {
+              if (r.targetGrades.includes("all") || r.targetGrades.includes("جميع الصفوف الدراسية")) return true;
+              if (!studentGrade) return true;
+              return r.targetGrades.includes(studentGrade);
+            }
+            // Fallback for legacy targetGrade string
+            if (r.targetGrade === "all" || !r.targetGrade || r.targetGrade === "جميع الصفوف الدراسية") return true;
+            return r.targetGrade === studentGrade;
+          });
         setAiRooms(list);
       },
       (err) => console.error("Error loading AI rooms:", err)
@@ -455,18 +464,21 @@ export default function StudentDashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
           {/* AI Assistant Rooms interactive buttons */}
           {aiRooms.map((room) => (
-            <button
+            <a
               key={room.id}
-              type="button"
-              onClick={() => setActiveAIRoomModal(room)}
+              href={room.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleLogActivity("ai_room", room.title, room.id)}
               className="student-ai-room-badge-btn"
               title={room.description || room.title}
+              style={{ textDecoration: "none" }}
             >
               <span className="ai-room-pulse-glow" />
               <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>{room.icon || "🤖"}</span>
               <span className="ai-room-btn-title">{room.title}</span>
               <span className="ai-room-sparkle-pill">{room.badgeText || "AI ⚡"}</span>
-            </button>
+            </a>
           ))}
 
           <span className={`subscription-badge ${subInfo.badgeClass}`} style={{ fontSize: "0.95rem", padding: "0.55rem 1.2rem", fontWeight: 800 }}>
@@ -1037,14 +1049,6 @@ export default function StudentDashboard() {
           studentProfile={userProfile}
           onClose={() => setActiveQuizToRun(null)}
           onComplete={() => {}}
-        />
-      )}
-
-      {/* INTERACTIVE AI ASSISTANT ROOM VIEWER MODAL */}
-      {activeAIRoomModal && (
-        <StudentAIRoomModal
-          room={activeAIRoomModal}
-          onClose={() => setActiveAIRoomModal(null)}
         />
       )}
     </div>

@@ -123,7 +123,7 @@ export default function TeacherDashboard() {
             }}
           >
             <span>🤖</span>
-            <span>غرف الذكاء الاصطناعي (AI)</span>
+            <span>اضافة غرف AI</span>
           </button>
 
           <Link to="/students/add" className="button button-sm button-primary" style={{ borderRadius: "12px", padding: "0.5rem 1rem", fontWeight: 800 }}>
