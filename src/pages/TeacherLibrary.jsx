@@ -81,8 +81,11 @@ export default function TeacherLibrary() {
   const [gradeFilter, setGradeFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [expandedLessons, setExpandedLessons] = useState({});
 
   const [form, setForm] = useState({
+    lessonNumber: "",
+    lessonTitle: "",
     title: "",
     type: "video",
     url: "",
@@ -121,14 +124,16 @@ export default function TeacherLibrary() {
     return () => unsubscribe();
   }, []);
 
-  const openAddModal = (presetType = "video") => {
+  const openAddModal = (presetType = "video", presetLessonNum = "", presetLessonTitle = "") => {
     setEditingId(null);
     setForm({
+      lessonNumber: presetLessonNum || "",
+      lessonTitle: presetLessonTitle || "",
       title: "",
       type: presetType,
       url: "",
-      grade: "جميع الصفوف الدراسية",
-      group: "جميع المجموعات",
+      grade: gradeFilter !== "all" ? gradeFilter : "جميع الصفوف الدراسية",
+      group: groupFilter !== "all" ? groupFilter : "جميع المجموعات",
       description: "",
     });
     setShowModal(true);
@@ -137,6 +142,8 @@ export default function TeacherLibrary() {
   const openEditModal = (item) => {
     setEditingId(item.id);
     setForm({
+      lessonNumber: item.lessonNumber ?? "",
+      lessonTitle: item.lessonTitle ?? "",
       title: item.title || "",
       type: item.type || "video",
       url: item.url || "",
@@ -201,10 +208,12 @@ export default function TeacherLibrary() {
       const qStr = search.trim().toLowerCase();
       if (qStr) {
         const titleMatch = item.title?.toLowerCase().includes(qStr);
+        const lessonTitleMatch = item.lessonTitle?.toLowerCase().includes(qStr);
+        const lessonNumMatch = String(item.lessonNumber || "").includes(qStr);
         const descMatch = item.description?.toLowerCase().includes(qStr);
         const gradeMatch = item.grade?.toLowerCase().includes(qStr);
         const groupMatch = item.group?.toLowerCase().includes(qStr);
-        if (!titleMatch && !descMatch && !gradeMatch && !groupMatch) return false;
+        if (!titleMatch && !lessonTitleMatch && !lessonNumMatch && !descMatch && !gradeMatch && !groupMatch) return false;
       }
 
       return true;
@@ -219,6 +228,105 @@ export default function TeacherLibrary() {
       infographic: items.filter((i) => i.type === "infographic").length,
     };
   }, [items]);
+
+  // Group filtered items by lesson number (primary key) then title
+  const groupedLessons = useMemo(() => {
+    const map = new Map();
+
+    filteredItems.forEach((item) => {
+      const rawNum = item.lessonNumber != null ? String(item.lessonNumber).trim() : "";
+      const rawTitle = item.lessonTitle ? String(item.lessonTitle).trim() : "";
+
+      let groupKey;
+      let displayNum = rawNum;
+      let displayTitle = rawTitle;
+
+      if (rawNum !== "") {
+        groupKey = `num_${rawNum}`;
+        if (!displayTitle && map.has(groupKey)) {
+          displayTitle = map.get(groupKey).lessonTitle;
+        }
+      } else {
+        if (!displayTitle && item.title) {
+          const match = item.title.match(/^(?:الدرس|درس)\s*([0-9]+)\s*[:\-–]\s*(.+)/i);
+          if (match) {
+            displayNum = match[1].trim();
+            displayTitle = match[2].trim();
+            groupKey = `num_${displayNum}`;
+          } else if (item.chapter) {
+            displayTitle = item.chapter.trim();
+            groupKey = `chapter_${displayTitle}`;
+          } else {
+            displayTitle = item.title.trim();
+            groupKey = `title_${displayTitle}`;
+          }
+        } else {
+          groupKey = displayTitle ? `title_${displayTitle}` : `other_ungrouped`;
+        }
+      }
+
+      if (!displayTitle) displayTitle = "شروحات ومواد إضافية";
+
+      if (!map.has(groupKey)) {
+        map.set(groupKey, {
+          id: groupKey,
+          lessonNumber: displayNum,
+          lessonTitle: displayTitle,
+          videos: [],
+          pdfs: [],
+          infographics: [],
+          allItems: [],
+        });
+      }
+
+      const grp = map.get(groupKey);
+      if (!grp.lessonTitle && displayTitle) grp.lessonTitle = displayTitle;
+      if (!grp.lessonNumber && displayNum) grp.lessonNumber = displayNum;
+
+      grp.allItems.push(item);
+      if (item.type === "video") grp.videos.push(item);
+      else if (item.type === "pdf") grp.pdfs.push(item);
+      else if (item.type === "infographic") grp.infographics.push(item);
+    });
+
+    const list = Array.from(map.values());
+
+    // Sort items inside each lesson: videos first, then pdfs, then infographics
+    list.forEach((l) => {
+      l.allItems = [...l.videos, ...l.pdfs, ...l.infographics];
+    });
+
+    // Sort lessons numerically
+    list.sort((a, b) => {
+      const numA = parseInt(a.lessonNumber, 10);
+      const numB = parseInt(b.lessonNumber, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      if (!isNaN(numA)) return -1;
+      if (!isNaN(numB)) return 1;
+      return (a.lessonTitle || "").localeCompare(b.lessonTitle || "", "ar");
+    });
+
+    return list;
+  }, [filteredItems]);
+
+  const toggleLesson = (id) => {
+    setExpandedLessons((prev) => ({
+      ...prev,
+      [id]: prev[id] === undefined ? false : !prev[id],
+    }));
+  };
+
+  const expandAllLessons = () => {
+    const all = {};
+    groupedLessons.forEach((l) => { all[l.id] = true; });
+    setExpandedLessons(all);
+  };
+
+  const collapseAllLessons = () => {
+    const none = {};
+    groupedLessons.forEach((l) => { none[l.id] = false; });
+    setExpandedLessons(none);
+  };
 
   return (
     <div className="dashboard-modern fade-in" style={{ paddingBottom: "3rem" }}>
@@ -248,47 +356,187 @@ export default function TeacherLibrary() {
         </div>
       </div>
 
-      {/* Control Bar & Filters */}
-      <div className="glass" style={{ margin: "1.5rem 0", padding: "1.25rem", borderRadius: "var(--radius-lg)" }}>
+      {/* 🎯 Grade & Group Selection Box */}
+      <div
+        className="glass"
+        style={{
+          margin: "1.5rem 0 1rem",
+          padding: "1.4rem 1.8rem",
+          borderRadius: "var(--radius-lg)",
+          background: "linear-gradient(135deg, rgba(30, 27, 75, 0.8), rgba(15, 23, 42, 0.95))",
+          border: "1.5px solid rgba(139, 92, 246, 0.35)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.3)"
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "#ffffff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span>🎯</span>
+              <span>تحديد الصف والمجموعة لتنظيم عرض الدروس</span>
+            </h3>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#cbd5e1", fontWeight: 600 }}>
+              اختر الصف والمجموعة لعرض الدروس والمحتويات التابعة لهما بتنظيم متسلسل
+            </p>
+          </div>
+
+          {(gradeFilter !== "all" || groupFilter !== "all") && (
+            <button
+              onClick={() => {
+                setGradeFilter("all");
+                setGroupFilter("all");
+              }}
+              className="button button-sm button-muted"
+              style={{ fontSize: "0.8rem", fontWeight: 700, borderRadius: "10px", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}
+            >
+              🔄 عرض جميع الصفوف والمجموعات
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+          {/* Grade Selector */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.84rem", fontWeight: 800, color: "#38bdf8", marginBottom: "0.4rem" }}>
+              🎓 الصف الدراسي المستهدف:
+            </label>
+            <select
+              className="form-input"
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.65rem 0.9rem",
+                borderRadius: "12px",
+                background: "rgba(15, 23, 42, 0.85)",
+                border: "1.5px solid rgba(56, 189, 248, 0.4)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: "0.9rem"
+              }}
+            >
+              <option value="all">🌐 جميع الصفوف الدراسية</option>
+              {GRADES.filter((g) => g !== "جميع الصفوف الدراسية").map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Group Selector */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.84rem", fontWeight: 800, color: "#4ade80", marginBottom: "0.4rem" }}>
+              👥 المجموعة المستهدفة:
+            </label>
+            <select
+              className="form-input"
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.65rem 0.9rem",
+                borderRadius: "12px",
+                background: "rgba(15, 23, 42, 0.85)",
+                border: "1.5px solid rgba(74, 222, 128, 0.4)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: "0.9rem"
+              }}
+            >
+              <option value="all">👥 جميع المجموعات</option>
+              {GROUPS.filter((grp) => grp !== "جميع المجموعات").map((grp) => (
+                <option key={grp} value={grp}>{grp}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Current Active Selection Summary */}
+        <div style={{ marginTop: "1rem", paddingTop: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.8rem" }}>
+          <div style={{ fontSize: "0.85rem", color: "#e2e8f0", fontWeight: 700 }}>
+            📌 المعروض حالياً: <span style={{ color: "#38bdf8", fontWeight: 900 }}>{gradeFilter === "all" ? "جميع الصفوف" : gradeFilter}</span> — <span style={{ color: "#4ade80", fontWeight: 900 }}>{groupFilter === "all" ? "جميع المجموعات" : groupFilter}</span>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", fontSize: "0.78rem" }}>
+            <span style={{ background: "rgba(168,85,247,0.18)", color: "#d8b4fe", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(168,85,247,0.3)" }}>
+              📖 {groupedLessons.length} درس
+            </span>
+            <span style={{ background: "rgba(14,165,233,0.18)", color: "#38bdf8", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(14,165,233,0.3)" }}>
+              🎬 {filteredItems.filter((i) => i.type === "video").length} فيديو
+            </span>
+            <span style={{ background: "rgba(239,68,68,0.18)", color: "#fca5a5", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(239,68,68,0.3)" }}>
+              📄 {filteredItems.filter((i) => i.type === "pdf").length} PDF
+            </span>
+            <span style={{ background: "rgba(34,197,94,0.18)", color: "#86efac", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(34,197,94,0.3)" }}>
+              🖼️ {filteredItems.filter((i) => i.type === "infographic").length} إنفوجرافيك
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Control Bar & Type Filters */}
+      <div className="glass" style={{ margin: "0 0 1.5rem", padding: "1.1rem 1.4rem", borderRadius: "var(--radius-lg)", background: "rgba(15,23,42,0.75)", border: "1px solid rgba(255,255,255,0.1)" }}>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
           {/* Type Filter Tabs */}
           <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
             <button
               onClick={() => setTypeFilter("all")}
               className={`button button-sm ${typeFilter === "all" ? "button-primary" : "button-muted"}`}
+              style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
               الكل ({counts.total})
             </button>
             <button
               onClick={() => setTypeFilter("video")}
               className={`button button-sm ${typeFilter === "video" ? "button-primary" : "button-muted"}`}
+              style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
-              🎬 شروحات فيديو ({counts.video})
+              🎬 فيديوهات ({counts.video})
             </button>
             <button
               onClick={() => setTypeFilter("pdf")}
               className={`button button-sm ${typeFilter === "pdf" ? "button-primary" : "button-muted"}`}
+              style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
-              📄 ملخصات PDF ({counts.pdf})
+              📄 ملازم PDF ({counts.pdf})
             </button>
             <button
               onClick={() => setTypeFilter("infographic")}
               className={`button button-sm ${typeFilter === "infographic" ? "button-primary" : "button-muted"}`}
+              style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
               🖼️ إنفوجرافيك ({counts.infographic})
             </button>
           </div>
 
-          {/* Search Box */}
-          <div style={{ flex: 1, maxWidth: "320px" }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="🔍 بحث باسم الدرس، المجموعة، أو الصف..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: "100%", padding: "0.5rem 0.9rem", fontSize: "0.88rem" }}
-            />
+          {/* Bulk Accordion Controls & Search */}
+          <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap", flex: "1 1 320px", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: "0.35rem" }}>
+              <button
+                onClick={expandAllLessons}
+                className="button button-sm button-muted"
+                style={{ fontSize: "0.78rem", fontWeight: 700, borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}
+                title="فتح جميع محتويات الدروس"
+              >
+                📂 فتح الكل
+              </button>
+              <button
+                onClick={collapseAllLessons}
+                className="button button-sm button-muted"
+                style={{ fontSize: "0.78rem", fontWeight: 700, borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}
+                title="طي جميع القوائم"
+              >
+                📁 طي الكل
+              </button>
+            </div>
+
+            <div style={{ minWidth: "200px", flex: 1, maxWidth: "300px" }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="🔍 بحث باسم الدرس أو العنوان..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: "100%", padding: "0.5rem 0.85rem", fontSize: "0.85rem", borderRadius: "10px" }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -302,107 +550,257 @@ export default function TeacherLibrary() {
 
       {error && <p className="form-error-modern">⚠️ {error}</p>}
 
-      {!loading && filteredItems.length === 0 && (
+      {!loading && groupedLessons.length === 0 && (
         <div className="empty-state glass" style={{ marginTop: "2rem" }}>
           <span style={{ fontSize: "3.5rem" }}>📚</span>
-          <p className="font-heading">لا يوجد محتوى تعليمي مطابق حالياً</p>
+          <p className="font-heading">لا يوجد محتوى تعليمي مطابق لهذا الصف أو المجموعة</p>
           <button onClick={() => openAddModal("video")} className="button button-primary" style={{ marginTop: "1rem" }}>
             + إضافة محتوى تعليمي جديد
           </button>
         </div>
       )}
 
-      {/* Items Grid */}
-      {!loading && filteredItems.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
-          gap: "1.25rem",
-          marginTop: "1.5rem"
-        }}>
-          {filteredItems.map((item) => {
-            const resType = RESOURCE_TYPES.find((t) => t.id === item.type) || RESOURCE_TYPES[0];
-            return (
-              <div key={item.id} className="glass" style={{
-                padding: "1.25rem",
-                borderRadius: "var(--radius-lg)",
-                border: "1px solid rgba(14, 165, 233, 0.25)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between"
-              }}>
-                <div>
-                  {/* Top Badges */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                    <span style={{
-                      background: "rgba(14, 165, 233, 0.15)",
-                      color: "var(--color-primary)",
-                      fontWeight: "700",
-                      fontSize: "0.8rem",
-                      padding: "0.25rem 0.65rem",
-                      borderRadius: "20px"
-                    }}>
-                      {resType.label}
-                    </span>
+      {/* Grouped Lessons Accordion List */}
+      {!loading && groupedLessons.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+          {groupedLessons.map((lesson, idx) => {
+            const isExpanded = expandedLessons[lesson.id] ?? true;
 
-                    <span style={{
-                      background: "rgba(255, 255, 255, 0.08)",
-                      fontSize: "0.78rem",
-                      padding: "0.25rem 0.65rem",
-                      borderRadius: "20px",
-                      color: "var(--color-muted)"
-                    }}>
-                      👥 {item.group}
-                    </span>
+            return (
+              <div
+                key={lesson.id}
+                className="glass"
+                style={{
+                  borderRadius: "20px",
+                  background: isExpanded
+                    ? "linear-gradient(180deg, rgba(24, 32, 54, 0.95), rgba(15, 23, 42, 0.98))"
+                    : "rgba(20, 28, 48, 0.8)",
+                  border: isExpanded
+                    ? "1.5px solid rgba(168, 85, 247, 0.45)"
+                    : "1.5px solid rgba(255, 255, 255, 0.1)",
+                  overflow: "hidden",
+                  boxShadow: isExpanded
+                    ? "0 10px 30px rgba(0, 0, 0, 0.35), 0 0 18px rgba(168, 85, 247, 0.12)"
+                    : "0 4px 15px rgba(0, 0, 0, 0.2)",
+                  transition: "all 0.25s ease"
+                }}
+              >
+                {/* Accordion Header */}
+                <div
+                  style={{
+                    padding: "1.15rem 1.5rem",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "0.8rem",
+                    background: isExpanded ? "rgba(168, 85, 247, 0.08)" : "transparent"
+                  }}
+                >
+                  {/* Right: Lesson Number Badge + Title */}
+                  <div
+                    onClick={() => toggleLesson(lesson.id)}
+                    style={{ display: "flex", alignItems: "center", gap: "0.8rem", cursor: "pointer", flexWrap: "wrap", flex: 1 }}
+                  >
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #8b5cf6, #3b82f6)",
+                        color: "#ffffff",
+                        padding: "0.38rem 0.85rem",
+                        borderRadius: "11px",
+                        fontWeight: 900,
+                        fontSize: "0.88rem",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      <span>📖</span>
+                      <span>{lesson.lessonNumber ? `الدرس ${lesson.lessonNumber}` : `الدرس ${idx + 1}`}</span>
+                    </div>
+
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "1.18rem",
+                        fontWeight: 900,
+                        color: "#ffffff",
+                        letterSpacing: "0.2px"
+                      }}
+                    >
+                      {lesson.lessonTitle}
+                    </h3>
+
+                    {/* Summary counts */}
+                    <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {lesson.videos.length > 0 && (
+                        <span style={{ background: "rgba(14, 165, 233, 0.18)", color: "#7dd3fc", border: "1px solid rgba(14, 165, 233, 0.3)", fontSize: "0.74rem", fontWeight: 800, padding: "0.15rem 0.5rem", borderRadius: "8px" }}>
+                          🎬 {lesson.videos.length} فيديو
+                        </span>
+                      )}
+                      {lesson.pdfs.length > 0 && (
+                        <span style={{ background: "rgba(239, 68, 68, 0.18)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.3)", fontSize: "0.74rem", fontWeight: 800, padding: "0.15rem 0.5rem", borderRadius: "8px" }}>
+                          📄 {lesson.pdfs.length} PDF
+                        </span>
+                      )}
+                      {lesson.infographics.length > 0 && (
+                        <span style={{ background: "rgba(34, 197, 94, 0.18)", color: "#86efac", border: "1px solid rgba(34, 197, 94, 0.3)", fontSize: "0.74rem", fontWeight: 800, padding: "0.15rem 0.5rem", borderRadius: "8px" }}>
+                          🖼️ {lesson.infographics.length} إنفوجرافيك
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="font-heading" style={{ margin: "0 0 0.5rem 0", fontSize: "1.15rem" }}>
-                    {item.title}
-                  </h3>
+                  {/* Left: Quick Add for This Lesson + Accordion Chevron */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                    <button
+                      type="button"
+                      onClick={() => openAddModal("video", lesson.lessonNumber, lesson.lessonTitle)}
+                      className="button button-sm button-primary"
+                      style={{ fontSize: "0.78rem", padding: "0.35rem 0.75rem", borderRadius: "10px", fontWeight: 800 }}
+                      title="إضافة فيديو أو ملف لهذا الدرس مباشرة"
+                    >
+                      + إضافة لهذا الدرس
+                    </button>
 
-                  <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
-                    🎓 <strong>الصف:</strong> {item.grade}
-                  </p>
-
-                  {item.description && (
-                    <p style={{ margin: "0 0 0.75rem 0", fontSize: "0.8rem", color: "var(--color-muted)", fontStyle: "italic" }}>
-                      📝 {item.description}
-                    </p>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => toggleLesson(lesson.id)}
+                      style={{
+                        background: isExpanded ? "rgba(168, 85, 247, 0.2)" : "rgba(255, 255, 255, 0.08)",
+                        color: isExpanded ? "#e9d5ff" : "#cbd5e1",
+                        border: `1px solid ${isExpanded ? "rgba(168, 85, 247, 0.4)" : "rgba(255, 255, 255, 0.12)"}`,
+                        padding: "0.35rem 0.75rem",
+                        borderRadius: "10px",
+                        fontSize: "0.78rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.4rem"
+                      }}
+                    >
+                      <span>{isExpanded ? "طي" : `عرض (${lesson.allItems.length})`}</span>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.25s ease",
+                          fontSize: "0.7rem"
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Card Actions */}
-                <div style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  marginTop: "1rem",
-                  paddingTop: "0.75rem",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                  flexWrap: "wrap"
-                }}>
-                  <button
-                    onClick={() => setPreviewItem(item)}
-                    className="button button-sm button-primary"
-                    style={{ flex: 1, fontSize: "0.82rem" }}
+                {/* Collapsible Lesson Content (Compact rows) */}
+                {isExpanded && (
+                  <div
+                    className="fade-in"
+                    style={{
+                      padding: "0.85rem 1.2rem 1.1rem",
+                      borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem"
+                    }}
                   >
-                    👁️ معاينة في العارض
-                  </button>
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="button button-sm button-muted"
-                    style={{ fontSize: "0.82rem", color: "#818cf8" }}
-                  >
-                    ✏️ تعديل
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id, item.title)}
-                    className="button button-sm button-muted"
-                    style={{ fontSize: "0.82rem", color: "var(--color-error)" }}
-                  >
-                    🗑️ حذف
-                  </button>
-                </div>
+                    {lesson.allItems.map((item, itemIdx) => {
+                      const isVideo = item.type === "video";
+                      const isPdf = item.type === "pdf";
+                      const accent = isVideo
+                        ? { bg: "rgba(14,165,233,0.1)", border: "rgba(14,165,233,0.28)", tag: "#38bdf8", tagBg: "rgba(14,165,233,0.18)", icon: "🎬", label: "فيديو" }
+                        : isPdf
+                        ? { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)", tag: "#f87171", tagBg: "rgba(239,68,68,0.18)", icon: "📄", label: "PDF" }
+                        : { bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.25)", tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)", icon: "🖼️", label: "إنفوجرافيك" };
+
+                      const prevItem = lesson.allItems[itemIdx - 1];
+                      const typeChanged = itemIdx > 0 && prevItem.type !== item.type;
+
+                      return (
+                        <div key={item.id}>
+                          {typeChanged && (
+                            <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "0.35rem 0" }} />
+                          )}
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.75rem",
+                              background: accent.bg,
+                              border: `1px solid ${accent.border}`,
+                              borderRadius: "12px",
+                              padding: "0.55rem 0.85rem",
+                              flexWrap: "wrap"
+                            }}
+                          >
+                            {/* Type Icon */}
+                            <span style={{ fontSize: "1.15rem", lineHeight: 1, flexShrink: 0 }}>
+                              {accent.icon}
+                            </span>
+
+                            {/* Item details */}
+                            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+                                <span style={{ background: accent.tagBg, color: accent.tag, fontSize: "0.68rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "6px", flexShrink: 0 }}>
+                                  {accent.label}
+                                </span>
+                                <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "#ffffff" }}>
+                                  {item.title}
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "#94a3b8", background: "rgba(255,255,255,0.06)", padding: "0.1rem 0.45rem", borderRadius: "6px" }}>
+                                  🎓 {item.grade}
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "#94a3b8", background: "rgba(255,255,255,0.06)", padding: "0.1rem 0.45rem", borderRadius: "6px" }}>
+                                  👥 {item.group}
+                                </span>
+                              </div>
+
+                              {item.description && (
+                                <p style={{ margin: "0.15rem 0 0 0", fontSize: "0.76rem", color: "#94a3b8", fontWeight: 600 }}>
+                                  📝 {item.description}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Teacher Actions */}
+                            <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", flexShrink: 0 }}>
+                              <button
+                                onClick={() => setPreviewItem(item)}
+                                className="button button-sm button-secondary"
+                                style={{ fontSize: "0.75rem", padding: "0.3rem 0.65rem", borderRadius: "8px", fontWeight: 700 }}
+                                title="معاينة المورد داخل العارض"
+                              >
+                                👁️ معاينة
+                              </button>
+                              <button
+                                onClick={() => openEditModal(item)}
+                                className="button button-sm button-muted"
+                                style={{ fontSize: "0.75rem", padding: "0.3rem 0.65rem", borderRadius: "8px", color: "#818cf8", fontWeight: 700 }}
+                                title="تعديل تفاصيل المورد"
+                              >
+                                ✏️ تعديل
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item.id, item.title)}
+                                className="button button-sm button-muted"
+                                style={{ fontSize: "0.75rem", padding: "0.3rem 0.65rem", borderRadius: "8px", color: "var(--color-error)", fontWeight: 700 }}
+                                title="حذف المورد"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -439,15 +837,45 @@ export default function TeacherLibrary() {
             </h3>
 
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {/* Title */}
+              {/* Lesson Number & Lesson Title */}
+              <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: "0.8rem" }}>
+                <div>
+                  <label style={{ display: "block", fontWeight: "700", marginBottom: "0.3rem", fontSize: "0.875rem" }}>
+                    🔢 رقم الدرس
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="مثال: 1"
+                    value={form.lessonNumber}
+                    onChange={(e) => setForm({ ...form, lessonNumber: e.target.value })}
+                    style={{ width: "100%", padding: "0.6rem 0.8rem", textAlign: "center", fontWeight: "bold" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontWeight: "700", marginBottom: "0.3rem", fontSize: "0.875rem" }}>
+                    📖 اسم الدرس الأساسي
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="مثال: الاشتقاق وقواعد السلسلة..."
+                    value={form.lessonTitle}
+                    onChange={(e) => setForm({ ...form, lessonTitle: e.target.value })}
+                    style={{ width: "100%", padding: "0.6rem 0.8rem" }}
+                  />
+                </div>
+              </div>
+
+              {/* Specific Resource Title */}
               <div>
                 <label style={{ display: "block", fontWeight: "700", marginBottom: "0.3rem", fontSize: "0.875rem" }}>
-                  📌 عنوان الدرس / الشرح
+                  📌 عنوان المورد أو الملف المحدد
                 </label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="مثال: شرح درس المشتقات العليا - الجزء الأول..."
+                  placeholder="مثال: شرح الجزء الأول بالفيديو، أو ملخص القوانين..."
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   required

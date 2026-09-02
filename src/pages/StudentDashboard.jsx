@@ -266,6 +266,8 @@ export default function StudentDashboard() {
   // Active Embedded Viewer item state
   const [activeViewerItem, setActiveViewerItem] = useState(null);
   const [libraryTab, setLibraryTab] = useState("all");
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [expandedLessons, setExpandedLessons] = useState({});
 
   // Active Quiz Runner state
   const [activeQuizToRun, setActiveQuizToRun] = useState(null);
@@ -441,10 +443,157 @@ export default function StudentDashboard() {
   const pdfsList = useMemo(() => libraryItems.filter((i) => i.type === "pdf"), [libraryItems]);
   const infographicsList = useMemo(() => libraryItems.filter((i) => i.type === "infographic"), [libraryItems]);
 
-  const filteredLibraryItems = useMemo(() => {
-    if (libraryTab === "all") return libraryItems;
-    return libraryItems.filter((i) => i.type === libraryTab);
-  }, [libraryItems, libraryTab]);
+  // Group library items by lesson number (primary key) then lesson title
+  const groupedLessons = useMemo(() => {
+    const map = new Map();
+
+    libraryItems.forEach((item) => {
+      const rawNum = item.lessonNumber != null ? String(item.lessonNumber).trim() : "";
+      const rawTitle = item.lessonTitle ? String(item.lessonTitle).trim() : "";
+
+      // ── Primary key: رقم الدرس يكفي وحده للتجميع ───────────────────────
+      // كل المواد التي تحمل نفس رقم الدرس تنضم لنفس المجموعة بغض النظر
+      // عن اسم الدرس (lessonTitle).
+      //
+      // If there is NO number, fall back to lessonTitle or smart extract from title.
+      let groupKey;
+      let displayNum = rawNum;
+      let displayTitle = rawTitle;
+
+      if (rawNum !== "") {
+        // Group strictly by number – ignore title differences for the key
+        groupKey = `num_${rawNum}`;
+        // If the lesson already exists, keep the first lessonTitle we saw;
+        // otherwise use rawTitle (might be empty → filled later).
+        if (!displayTitle && map.has(groupKey)) {
+          displayTitle = map.get(groupKey).lessonTitle;
+        }
+      } else {
+        // No number → try to parse it from the item title (legacy support)
+        if (!displayTitle && item.title) {
+          const match = item.title.match(
+            /^(?:الدرس|درس)\s*([0-9]+)\s*[:\-–]\s*(.+)/i
+          );
+          if (match) {
+            displayNum = match[1].trim();
+            displayTitle = match[2].trim();
+            groupKey = `num_${displayNum}`;
+          } else if (item.chapter) {
+            displayTitle = item.chapter.trim();
+            groupKey = `chapter_${displayTitle}`;
+          } else {
+            // No lesson number at all → each unique title is its own bucket
+            displayTitle = item.title.trim();
+            groupKey = `title_${displayTitle}`;
+          }
+        } else {
+          groupKey = displayTitle ? `title_${displayTitle}` : `other_ungrouped`;
+        }
+      }
+
+      if (!displayTitle) displayTitle = "شروحات ومواد إضافية";
+
+      if (!map.has(groupKey)) {
+        map.set(groupKey, {
+          id: groupKey,
+          lessonNumber: displayNum,
+          lessonTitle: displayTitle,
+          videos: [],
+          pdfs: [],
+          infographics: [],
+          allItems: [],
+          createdAt: item.createdAt,
+        });
+      }
+
+      const grp = map.get(groupKey);
+
+      // Update lessonTitle if the existing entry was empty and we now have one
+      if (!grp.lessonTitle && displayTitle) grp.lessonTitle = displayTitle;
+      if (!grp.lessonNumber && displayNum) grp.lessonNumber = displayNum;
+
+      grp.allItems.push(item);
+      if (item.type === "video") grp.videos.push(item);
+      else if (item.type === "pdf") grp.pdfs.push(item);
+      else if (item.type === "infographic") grp.infographics.push(item);
+    });
+
+    const list = Array.from(map.values());
+
+    // Sort: numbered lessons first (ascending), then un-numbered groups
+    list.sort((a, b) => {
+      const numA = parseInt(a.lessonNumber, 10);
+      const numB = parseInt(b.lessonNumber, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      if (!isNaN(numA)) return -1;
+      if (!isNaN(numB)) return 1;
+      return (a.lessonTitle || "").localeCompare(b.lessonTitle || "", "ar");
+    });
+
+    return list;
+  }, [libraryItems]);
+
+  // Filter lessons based on type tab and search query
+  const filteredLessons = useMemo(() => {
+    const qStr = librarySearch.trim().toLowerCase();
+
+    return groupedLessons
+      .map((lesson) => {
+        let items = lesson.allItems;
+        if (libraryTab === "video") items = lesson.videos;
+        else if (libraryTab === "pdf") items = lesson.pdfs;
+        else if (libraryTab === "infographic") items = lesson.infographics;
+
+        if (qStr) {
+          const lessonMatch =
+            lesson.lessonTitle.toLowerCase().includes(qStr) ||
+            String(lesson.lessonNumber).includes(qStr);
+
+          items = items.filter(
+            (i) =>
+              lessonMatch ||
+              i.title?.toLowerCase().includes(qStr) ||
+              i.description?.toLowerCase().includes(qStr)
+          );
+        }
+
+        const typeOrder = { video: 0, pdf: 1, infographic: 2 };
+        const vids = items.filter((i) => i.type === "video");
+        const pdfs = items.filter((i) => i.type === "pdf");
+        const infos = items.filter((i) => i.type === "infographic");
+        // Always show videos → PDFs → infographics in that order
+        const sortedItems = [...vids, ...pdfs, ...infos];
+
+        return {
+          ...lesson,
+          displayedItems: sortedItems,
+          displayedVideos: vids,
+          displayedPdfs: pdfs,
+          displayedInfographics: infos,
+          count: sortedItems.length,
+        };
+      })
+      .filter((lesson) => lesson.count > 0);
+  }, [groupedLessons, libraryTab, librarySearch]);
+
+  const toggleLesson = (id) => {
+    setExpandedLessons((prev) => ({
+      ...prev,
+      [id]: prev[id] === undefined ? false : !prev[id],
+    }));
+  };
+
+  const expandAllLessons = () => {
+    const all = {};
+    filteredLessons.forEach((l) => { all[l.id] = true; });
+    setExpandedLessons(all);
+  };
+
+  const collapseAllLessons = () => {
+    const none = {};
+    filteredLessons.forEach((l) => { none[l.id] = false; });
+    setExpandedLessons(none);
+  };
 
   return (
     <div className="dashboard-modern fade-in" style={{ paddingBottom: "3rem" }}>
@@ -647,92 +796,429 @@ export default function StudentDashboard() {
             </div>
           )}
 
-          {/* 3️⃣ TAB 3: LIBRARY (المكتبة والشروحات) */}
+          {/* 3️⃣ TAB 3: LIBRARY (المكتبة والشروحات المنظمة حسب الدروس) */}
           {activeMainTab === "library" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-              <div className="glass" style={{ padding: "1.4rem 1.8rem", borderRadius: "22px", background: "rgba(15,23,42,0.8)", border: "1.5px solid rgba(168,85,247,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.4rem" }}>
+              {/* Header & Main Stats Bar */}
+              <div
+                className="glass"
+                style={{
+                  padding: "1.6rem 2rem",
+                  borderRadius: "24px",
+                  background: "linear-gradient(135deg, rgba(30,27,75,0.85), rgba(15,23,42,0.95))",
+                  border: "1.5px solid rgba(168,85,247,0.35)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "1.2rem",
+                  boxShadow: "0 12px 30px rgba(0,0,0,0.35)"
+                }}
+              >
                 <div>
-                  <h2 style={{ fontSize: "1.3rem", fontWeight: 900, margin: 0, color: "#ffffff" }}>
-                    📚 المكتبة الشاملة المرفقة ({libraryItems.length})
-                  </h2>
-                  <p style={{ fontSize: "0.9rem", color: "#cbd5e1", margin: "0.3rem 0 0 0", fontWeight: 600 }}>
-                    شروحات فيديو، ملخصات PDF، وإنفوجرافيك للمنهج
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.3rem" }}>
+                    <span style={{ fontSize: "1.8rem" }}>📚</span>
+                    <h2 style={{ fontSize: "1.45rem", fontWeight: 900, margin: 0, color: "#ffffff", letterSpacing: "0.2px" }}>
+                      المكتبة والشروحات المنظمة
+                    </h2>
+                  </div>
+                  <p style={{ fontSize: "0.92rem", color: "#cbd5e1", margin: 0, fontWeight: 600 }}>
+                    محتوى تعليمي متكامل مقسم حسب كل درس: فيديوهات، ملازم وملخصات PDF، وإنفوجرافيك للمنهج
                   </p>
                 </div>
 
-                {/* Sub-filters */}
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <button onClick={() => setLibraryTab("all")} className={`button button-sm ${libraryTab === "all" ? "button-primary" : "button-muted"}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
+                {/* Overall Summary Badges */}
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+                  <div style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#d8b4fe", lineHeight: 1 }}>{groupedLessons.length}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>📖 الدروس</div>
+                  </div>
+                  <div style={{ background: "rgba(14,165,233,0.18)", border: "1px solid rgba(14,165,233,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#38bdf8", lineHeight: 1 }}>{videosList.length}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>🎬 فيديوهات</div>
+                  </div>
+                  <div style={{ background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fca5a5", lineHeight: 1 }}>{pdfsList.length}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>📄 ملازم PDF</div>
+                  </div>
+                  <div style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#4ade80", lineHeight: 1 }}>{infographicsList.length}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>🖼️ إنفوجرافيك</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div
+                className="glass"
+                style={{
+                  padding: "1rem 1.4rem",
+                  borderRadius: "20px",
+                  background: "rgba(15,23,42,0.75)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "0.9rem"
+                }}
+              >
+                {/* Search input */}
+                <div style={{ position: "relative", flex: "1 1 260px", minWidth: "220px" }}>
+                  <input
+                    type="text"
+                    value={librarySearch}
+                    onChange={(e) => setLibrarySearch(e.target.value)}
+                    placeholder="🔍 ابحث برقم الدرس، اسم الدرس، أو عنوان الملف..."
+                    className="form-input"
+                    style={{
+                      width: "100%",
+                      padding: "0.65rem 1rem 0.65rem 2.2rem",
+                      fontSize: "0.9rem",
+                      borderRadius: "14px",
+                      background: "rgba(30,41,59,0.8)",
+                      border: "1px solid rgba(255,255,255,0.15)"
+                    }}
+                  />
+                  {librarySearch && (
+                    <button
+                      onClick={() => setLibrarySearch("")}
+                      style={{
+                        position: "absolute",
+                        left: "0.7rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "transparent",
+                        border: "none",
+                        color: "#94a3b8",
+                        cursor: "pointer",
+                        fontSize: "0.95rem"
+                      }}
+                      title="مسح البحث"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Sub-filters (Type) */}
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setLibraryTab("all")}
+                    className={`button button-sm ${libraryTab === "all" ? "button-primary" : "button-muted"}`}
+                    style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
+                  >
                     الكل ({libraryItems.length})
                   </button>
-                  <button onClick={() => setLibraryTab("video")} className={`button button-sm ${libraryTab === "video" ? "button-primary" : "button-muted"}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
+                  <button
+                    onClick={() => setLibraryTab("video")}
+                    className={`button button-sm ${libraryTab === "video" ? "button-primary" : "button-muted"}`}
+                    style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
+                  >
                     🎬 فيديوهات ({videosList.length})
                   </button>
-                  <button onClick={() => setLibraryTab("pdf")} className={`button button-sm ${libraryTab === "pdf" ? "button-primary" : "button-muted"}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
-                    📄 ملفات PDF ({pdfsList.length})
+                  <button
+                    onClick={() => setLibraryTab("pdf")}
+                    className={`button button-sm ${libraryTab === "pdf" ? "button-primary" : "button-muted"}`}
+                    style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
+                  >
+                    📄 ملازم PDF ({pdfsList.length})
                   </button>
-                  <button onClick={() => setLibraryTab("infographic")} className={`button button-sm ${libraryTab === "infographic" ? "button-primary" : "button-muted"}`} style={{ fontSize: "0.85rem", fontWeight: 800 }}>
+                  <button
+                    onClick={() => setLibraryTab("infographic")}
+                    className={`button button-sm ${libraryTab === "infographic" ? "button-primary" : "button-muted"}`}
+                    style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
+                  >
                     🖼️ إنفوجرافيك ({infographicsList.length})
+                  </button>
+                </div>
+
+                {/* Bulk Accordion Controls */}
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <button
+                    onClick={expandAllLessons}
+                    className="button button-sm button-muted"
+                    style={{ fontSize: "0.8rem", fontWeight: 700, borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)" }}
+                    title="فتح جميع محتويات الدروس"
+                  >
+                    📂 فتح الكل
+                  </button>
+                  <button
+                    onClick={collapseAllLessons}
+                    className="button button-sm button-muted"
+                    style={{ fontSize: "0.8rem", fontWeight: 700, borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)" }}
+                    title="طي جميع القوائم"
+                  >
+                    📁 طي الكل
                   </button>
                 </div>
               </div>
 
-              {filteredLibraryItems.length === 0 ? (
-                <div className="glass" style={{ textAlign: "center", padding: "3.5rem 1rem", borderRadius: "22px", background: "rgba(15,23,42,0.6)" }}>
-                  <span style={{ fontSize: "3.2rem" }}>📚</span>
-                  <p style={{ color: "#cbd5e1", margin: "0.6rem 0 0 0", fontWeight: 700, fontSize: "1rem" }}>لا توجد ملفات أو شروحات مضافة في هذا الفرز حالياً.</p>
+              {/* Lessons Accordion List */}
+              {filteredLessons.length === 0 ? (
+                <div className="glass" style={{ textAlign: "center", padding: "4rem 1.5rem", borderRadius: "22px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <span style={{ fontSize: "3.5rem" }}>📚</span>
+                  <h3 style={{ margin: "0.8rem 0 0.3rem 0", color: "#ffffff", fontWeight: 900, fontSize: "1.2rem" }}>
+                    لا توجد دروس أو شروحات مطابقة
+                  </h3>
+                  <p style={{ color: "#cbd5e1", margin: 0, fontWeight: 600, fontSize: "0.95rem" }}>
+                    {librarySearch ? "جرب البحث بكلمات أخرى أو اختر نوع محتوى مختلف." : "سيقوم المعلم بإضافة الشروحات والملفات المخصصة لصفك ومجموعتك هنا قريباً."}
+                  </p>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "1.25rem" }}>
-                  {filteredLibraryItems.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        background: "rgba(30, 41, 59, 0.85)",
-                        border: "1.5px solid rgba(255, 255, 255, 0.12)",
-                        borderRadius: "20px",
-                        padding: "1.3rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        gap: "0.9rem",
-                        boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.7rem" }}>
-                          <span
-                            style={{
-                              background: item.type === "video" ? "rgba(239,68,68,0.25)" : item.type === "pdf" ? "rgba(56,189,248,0.25)" : "rgba(168,85,247,0.25)",
-                              color: item.type === "video" ? "#fca5a5" : item.type === "pdf" ? "#7dd3fc" : "#e9d5ff",
-                              border: `1px solid ${item.type === "video" ? "#f87171" : item.type === "pdf" ? "#38bdf8" : "#c084fc"}`,
-                              fontSize: "0.78rem",
-                              fontWeight: 800,
-                              padding: "0.25rem 0.7rem",
-                              borderRadius: "14px",
-                            }}
-                          >
-                            {item.type === "video" ? "🎬 فيديو شرح" : item.type === "pdf" ? "📄 تلخيص PDF" : "🖼️ إنفوجرافيك"}
-                          </span>
-                          {item.chapter && <span style={{ fontSize: "0.78rem", color: "#cbd5e1", fontWeight: 700 }}>📖 {item.chapter}</span>}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+                  {filteredLessons.map((lesson, idx) => {
+                    const isExpanded = expandedLessons[lesson.id] ?? true;
+
+                    return (
+                      <div
+                        key={lesson.id}
+                        className="glass"
+                        style={{
+                          borderRadius: "22px",
+                          background: isExpanded
+                            ? "linear-gradient(180deg, rgba(24, 32, 54, 0.95), rgba(15, 23, 42, 0.98))"
+                            : "rgba(20, 28, 48, 0.8)",
+                          border: isExpanded
+                            ? "1.5px solid rgba(168, 85, 247, 0.45)"
+                            : "1.5px solid rgba(255, 255, 255, 0.1)",
+                          overflow: "hidden",
+                          boxShadow: isExpanded
+                            ? "0 12px 35px rgba(0, 0, 0, 0.4), 0 0 20px rgba(168, 85, 247, 0.15)"
+                            : "0 6px 20px rgba(0, 0, 0, 0.25)",
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                        }}
+                      >
+                        {/* Accordion Header (Click to expand/collapse) */}
+                        <div
+                          onClick={() => toggleLesson(lesson.id)}
+                          style={{
+                            padding: "1.25rem 1.6rem",
+                            cursor: "pointer",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            gap: "0.9rem",
+                            userSelect: "none",
+                            background: isExpanded ? "rgba(168, 85, 247, 0.08)" : "transparent",
+                            transition: "background 0.2s ease"
+                          }}
+                        >
+                          {/* Right: Lesson Number Badge + Lesson Title */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.9rem", flexWrap: "wrap" }}>
+                            <div
+                              style={{
+                                background: "linear-gradient(135deg, #8b5cf6, #3b82f6)",
+                                color: "#ffffff",
+                                padding: "0.4rem 0.95rem",
+                                borderRadius: "12px",
+                                fontWeight: 900,
+                                fontSize: "0.92rem",
+                                letterSpacing: "0.3px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.4rem",
+                                boxShadow: "0 4px 12px rgba(139, 92, 246, 0.35)",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              <span>📖</span>
+                              <span>{lesson.lessonNumber ? `الدرس ${lesson.lessonNumber}` : `الدرس ${idx + 1}`}</span>
+                            </div>
+
+                            <h3
+                              style={{
+                                margin: 0,
+                                fontSize: "1.22rem",
+                                fontWeight: 900,
+                                color: "#ffffff",
+                                letterSpacing: "0.2px"
+                              }}
+                            >
+                              {lesson.lessonTitle}
+                            </h3>
+                          </div>
+
+                          {/* Left: Summary Counts + Toggle Chevron */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", flexWrap: "wrap" }}>
+                            {/* Counts badges */}
+                            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                              {lesson.displayedVideos.length > 0 && (
+                                <span style={{ background: "rgba(14, 165, 233, 0.2)", color: "#7dd3fc", border: "1px solid rgba(14, 165, 233, 0.35)", fontSize: "0.78rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "10px" }}>
+                                  🎬 {lesson.displayedVideos.length} فيديو
+                                </span>
+                              )}
+                              {lesson.displayedPdfs.length > 0 && (
+                                <span style={{ background: "rgba(239, 68, 68, 0.2)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.35)", fontSize: "0.78rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "10px" }}>
+                                  📄 {lesson.displayedPdfs.length} ملخص PDF
+                                </span>
+                              )}
+                              {lesson.displayedInfographics.length > 0 && (
+                                <span style={{ background: "rgba(34, 197, 94, 0.2)", color: "#86efac", border: "1px solid rgba(34, 197, 94, 0.35)", fontSize: "0.78rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "10px" }}>
+                                  🖼️ {lesson.displayedInfographics.length} إنفوجرافيك
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Chevron Toggle Pill */}
+                            <div
+                              style={{
+                                background: isExpanded ? "rgba(168, 85, 247, 0.25)" : "rgba(255, 255, 255, 0.08)",
+                                color: isExpanded ? "#e9d5ff" : "#cbd5e1",
+                                border: `1px solid ${isExpanded ? "rgba(168, 85, 247, 0.5)" : "rgba(255, 255, 255, 0.15)"}`,
+                                padding: "0.35rem 0.85rem",
+                                borderRadius: "12px",
+                                fontSize: "0.82rem",
+                                fontWeight: 800,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.45rem",
+                                transition: "all 0.2s ease"
+                              }}
+                            >
+                              <span>{isExpanded ? "طي المحتويات" : `عرض المحتويات (${lesson.count})`}</span>
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                                  transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  fontSize: "0.75rem"
+                                }}
+                              >
+                                ▼
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        <h3 style={{ fontSize: "1.15rem", fontWeight: 900, color: "#ffffff", margin: "0 0 0.5rem 0" }}>{item.title}</h3>
-                        {item.description && <p style={{ fontSize: "0.85rem", color: "#cbd5e1", margin: "0 0 0.6rem 0", lineHeight: 1.5, fontWeight: 600 }}>{item.description}</p>}
-                      </div>
+                        {/* Collapsible Dropdown Content — Compact Style */}
+                        {isExpanded && (
+                          <div
+                            className="fade-in"
+                            style={{
+                              padding: "0.9rem 1.2rem 1.1rem",
+                              borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.5rem"
+                            }}
+                          >
+                            {/* ── helper to render a compact item row ── */}
+                            {lesson.displayedItems.map((item, itemIdx) => {
+                              const isVideo       = item.type === "video";
+                              const isPdf         = item.type === "pdf";
+                              // colour palette per type
+                              const accent = isVideo
+                                ? { bg: "rgba(14,165,233,0.12)", border: "rgba(14,165,233,0.3)", tag: "#38bdf8", tagBg: "rgba(14,165,233,0.18)", icon: "🎬", label: "فيديو", btnTxt: "▶ تشغيل", btnBg: "linear-gradient(90deg,#0284c7,#2563eb)", btnBorder: "transparent" }
+                                : isPdf
+                                ? { bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.28)",  tag: "#f87171", tagBg: "rgba(239,68,68,0.18)",   icon: "📄", label: "PDF",    btnTxt: "👁 قراءة", btnBg: "transparent",                      btnBorder: "rgba(239,68,68,0.5)" }
+                                : { bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.28)",  tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)",   icon: "🖼️", label: "إنفوجرافيك", btnTxt: "🖼 عرض", btnBg: "transparent",                    btnBorder: "rgba(34,197,94,0.5)" };
 
-                      <button
-                        onClick={() => {
-                          handleLogActivity(item.type || "library_view", item.title, item.id);
-                          setActiveViewerItem(item);
-                        }}
-                        className="button button-secondary"
-                        style={{ width: "100%", justifyContent: "center", fontSize: "0.9rem", fontWeight: 800 }}
-                      >
-                        {item.type === "video" ? "▶️ تشغيل الفيديو داخل المنصة" : item.type === "pdf" ? "👁️ عرض وقراءة ملف PDF" : "🖼️ فتح الإنفوجرافيك"}
-                      </button>
-                    </div>
-                  ))}
+                              // thin separator only when type changes
+                              const prevItem = lesson.displayedItems[itemIdx - 1];
+                              const typeChanged = itemIdx > 0 && prevItem.type !== item.type;
+
+                              return (
+                                <div key={item.id}>
+                                  {typeChanged && (
+                                    <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "0.4rem 0" }} />
+                                  )}
+
+                                  {/* ── Compact Row ── */}
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "0.75rem",
+                                      background: accent.bg,
+                                      border: `1px solid ${accent.border}`,
+                                      borderRadius: "12px",
+                                      padding: "0.55rem 0.85rem",
+                                      transition: "background 0.18s ease"
+                                    }}
+                                  >
+                                    {/* Type icon */}
+                                    <span style={{ fontSize: "1.15rem", lineHeight: 1, flexShrink: 0 }}>
+                                      {accent.icon}
+                                    </span>
+
+                                    {/* Text info */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+                                        <span style={{
+                                          background: accent.tagBg,
+                                          color: accent.tag,
+                                          fontSize: "0.68rem",
+                                          fontWeight: 800,
+                                          padding: "0.1rem 0.5rem",
+                                          borderRadius: "6px",
+                                          whiteSpace: "nowrap",
+                                          flexShrink: 0
+                                        }}>
+                                          {accent.label}
+                                        </span>
+                                        <span style={{
+                                          fontSize: "0.9rem",
+                                          fontWeight: 800,
+                                          color: "#e2e8f0",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap"
+                                        }}>
+                                          {item.title}
+                                        </span>
+                                      </div>
+                                      {item.description && (
+                                        <p style={{
+                                          margin: "0.15rem 0 0 0",
+                                          fontSize: "0.75rem",
+                                          color: "#94a3b8",
+                                          fontWeight: 600,
+                                          lineHeight: 1.35,
+                                          overflow: "hidden",
+                                          display: "-webkit-box",
+                                          WebkitLineClamp: 1,
+                                          WebkitBoxOrient: "vertical"
+                                        }}>
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Action button — compact */}
+                                    <button
+                                      onClick={() => {
+                                        handleLogActivity(item.type || "library_view", item.title, item.id);
+                                        setActiveViewerItem(item);
+                                      }}
+                                      style={{
+                                        flexShrink: 0,
+                                        padding: "0.38rem 0.9rem",
+                                        borderRadius: "9px",
+                                        fontSize: "0.78rem",
+                                        fontWeight: 800,
+                                        cursor: "pointer",
+                                        border: `1.5px solid ${accent.btnBorder}`,
+                                        background: accent.btnBg,
+                                        color: isVideo ? "#ffffff" : accent.tag,
+                                        whiteSpace: "nowrap",
+                                        transition: "opacity 0.15s ease"
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.opacity = "0.82"}
+                                      onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                                    >
+                                      {accent.btnTxt}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
