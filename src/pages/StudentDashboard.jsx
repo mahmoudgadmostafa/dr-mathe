@@ -823,7 +823,7 @@ export default function StudentDashboard() {
                     </h2>
                   </div>
                   <p style={{ fontSize: "0.92rem", color: "#cbd5e1", margin: 0, fontWeight: 600 }}>
-                    محتوى تعليمي متكامل مقسم حسب كل درس: فيديوهات، ملازم وملخصات PDF، وإنفوجرافيك للمنهج
+                    محتوى تعليمي متكامل مقسم حسب كل درس: فيديوهات، ملازم وشروحات PDF، ومحتويات أخرى للمنهج
                   </p>
                 </div>
 
@@ -839,11 +839,11 @@ export default function StudentDashboard() {
                   </div>
                   <div style={{ background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
                     <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fca5a5", lineHeight: 1 }}>{pdfsList.length}</div>
-                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>📄 ملازم PDF</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>📄 ملازم وشروحات</div>
                   </div>
                   <div style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.4)", borderRadius: "14px", padding: "0.45rem 0.9rem", textAlign: "center" }}>
                     <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#4ade80", lineHeight: 1 }}>{infographicsList.length}</div>
-                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>🖼️ إنفوجرافيك</div>
+                    <div style={{ fontSize: "0.72rem", color: "#cbd5e1", fontWeight: 700, marginTop: "0.15rem" }}>🖼️ محتويات أخرى</div>
                   </div>
                 </div>
               </div>
@@ -922,14 +922,14 @@ export default function StudentDashboard() {
                     className={`button button-sm ${libraryTab === "pdf" ? "button-primary" : "button-muted"}`}
                     style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
                   >
-                    📄 ملازم PDF ({pdfsList.length})
+                    📄 ملازم وشروحات ({pdfsList.length})
                   </button>
                   <button
                     onClick={() => setLibraryTab("infographic")}
                     className={`button button-sm ${libraryTab === "infographic" ? "button-primary" : "button-muted"}`}
                     style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "12px" }}
                   >
-                    🖼️ إنفوجرافيك ({infographicsList.length})
+                    🖼️ محتويات أخرى ({infographicsList.length})
                   </button>
                 </div>
 
@@ -1051,12 +1051,12 @@ export default function StudentDashboard() {
                               )}
                               {lesson.displayedPdfs.length > 0 && (
                                 <span style={{ background: "rgba(239, 68, 68, 0.2)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.35)", fontSize: "0.78rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "10px" }}>
-                                  📄 {lesson.displayedPdfs.length} ملخص PDF
+                                  📄 {lesson.displayedPdfs.length} ملازم وشروحات
                                 </span>
                               )}
                               {lesson.displayedInfographics.length > 0 && (
                                 <span style={{ background: "rgba(34, 197, 94, 0.2)", color: "#86efac", border: "1px solid rgba(34, 197, 94, 0.35)", fontSize: "0.78rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "10px" }}>
-                                  🖼️ {lesson.displayedInfographics.length} إنفوجرافيك
+                                  🖼️ {lesson.displayedInfographics.length} محتويات أخرى
                                 </span>
                               )}
                             </div>
@@ -1112,8 +1112,8 @@ export default function StudentDashboard() {
                               const accent = isVideo
                                 ? { bg: "rgba(14,165,233,0.12)", border: "rgba(14,165,233,0.3)", tag: "#38bdf8", tagBg: "rgba(14,165,233,0.18)", icon: "🎬", label: "فيديو", btnTxt: "▶ تشغيل", btnBg: "linear-gradient(90deg,#0284c7,#2563eb)", btnBorder: "transparent" }
                                 : isPdf
-                                ? { bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.28)",  tag: "#f87171", tagBg: "rgba(239,68,68,0.18)",   icon: "📄", label: "PDF",    btnTxt: "👁 قراءة", btnBg: "transparent",                      btnBorder: "rgba(239,68,68,0.5)" }
-                                : { bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.28)",  tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)",   icon: "🖼️", label: "إنفوجرافيك", btnTxt: "🖼 عرض", btnBg: "transparent",                    btnBorder: "rgba(34,197,94,0.5)" };
+                                ? { bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.28)",  tag: "#f87171", tagBg: "rgba(239,68,68,0.18)",   icon: "📄", label: "ملازم وشروحات",    btnTxt: "👁 قراءة", btnBg: "transparent",                      btnBorder: "rgba(239,68,68,0.5)" }
+                                : { bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.28)",  tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)",   icon: "🖼️", label: "محتويات أخرى", btnTxt: "🖼 عرض", btnBg: "transparent",                    btnBorder: "rgba(34,197,94,0.5)" };
 
                               // thin separator only when type changes
                               const prevItem = lesson.displayedItems[itemIdx - 1];
@@ -1410,17 +1410,51 @@ export default function StudentDashboard() {
                   {activeViewerItem.title}
                 </h3>
                 <p style={{ margin: "0.2rem 0 0 0", color: "#38bdf8", fontSize: "0.88rem", fontWeight: 700 }}>
-                  {activeViewerItem.type === "video" ? "🎬 مشغّل الشرح الفيديوي" : activeViewerItem.type === "pdf" ? "📄 عارض ملخص PDF" : "🖼️ عارض الإنفوجرافيك"}
+                  {activeViewerItem.type === "video" ? "🎬 مشغّل الشرح الفيديوي" : activeViewerItem.type === "pdf" ? "📄 عارض الملازم والشروحات" : "🖼️ عارض المحتويات الأخرى"}
                 </p>
               </div>
 
-              <button
-                onClick={() => setActiveViewerItem(null)}
-                className="button button-sm button-muted"
-                style={{ borderRadius: "50%", width: "36px", height: "36px", padding: 0 }}
-              >
-                ✕
-              </button>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                {(activeViewerItem.type === "pdf" || activeViewerItem.type === "infographic") && (
+                  <a
+                    href={activeViewerItem.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="فتح في نافذة خارجية جديدة"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      background: activeViewerItem.type === "pdf"
+                        ? "linear-gradient(135deg, #ef4444, #b91c1c)"
+                        : "linear-gradient(135deg, #22c55e, #15803d)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontSize: "0.8rem",
+                      padding: "0.45rem 1rem",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      boxShadow: activeViewerItem.type === "pdf"
+                        ? "0 4px 14px rgba(239,68,68,0.4)"
+                        : "0 4px 14px rgba(34,197,94,0.4)",
+                      transition: "all 0.2s ease",
+                      whiteSpace: "nowrap",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.filter = "brightness(1.15)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.filter = "brightness(1)"; }}
+                  >
+                    <span style={{ fontSize: "0.95rem" }}>↗</span>
+                    فتح خارجياً
+                  </a>
+                )}
+                <button
+                  onClick={() => setActiveViewerItem(null)}
+                  className="button button-sm button-muted"
+                  style={{ borderRadius: "50%", width: "36px", height: "36px", padding: 0 }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div style={{ flex: 1, minHeight: "420px", display: "flex", flexDirection: "column" }}>
@@ -1437,20 +1471,54 @@ export default function StudentDashboard() {
               )}
 
               {activeViewerItem.type === "pdf" && (
-                <iframe
-                  src={getEmbedUrl(activeViewerItem.url, "pdf")}
-                  title={activeViewerItem.title}
-                  style={{ width: "100%", height: "550px", border: 0, borderRadius: "16px", background: "#fff" }}
-                />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    background: "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(15,23,42,0.9))",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    borderRadius: "12px",
+                    padding: "0.55rem 1rem",
+                    flexWrap: "wrap",
+                  }}>
+                    <span style={{ fontSize: "1rem" }}>⚠️</span>
+                    <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontWeight: 600 }}>
+                      إذا لم يظهر الملف بشكل صحيح داخل العارض، استخدم زر <strong style={{ color: "#f87171" }}>&ldquo;فتح خارجياً&rdquo;</strong> في الأعلى لعرضه في نافذة مستقلة
+                    </span>
+                  </div>
+                  <iframe
+                    src={getEmbedUrl(activeViewerItem.url, "pdf")}
+                    title={activeViewerItem.title}
+                    style={{ width: "100%", height: "520px", border: 0, borderRadius: "16px", background: "#fff" }}
+                  />
+                </div>
               )}
 
               {activeViewerItem.type === "infographic" && (
-                <div style={{ textAlign: "center", padding: "1rem", overflow: "auto" }}>
-                  <img
-                    src={activeViewerItem.url}
-                    alt={activeViewerItem.title}
-                    style={{ maxWidth: "100%", maxHeight: "65vh", borderRadius: "16px", objectFit: "contain" }}
-                  />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(15,23,42,0.9))",
+                    border: "1px solid rgba(34,197,94,0.2)",
+                    borderRadius: "12px",
+                    padding: "0.55rem 1rem",
+                    flexWrap: "wrap",
+                  }}>
+                    <span style={{ fontSize: "1rem" }}>💡</span>
+                    <span style={{ fontSize: "0.8rem", color: "#86efac", fontWeight: 600 }}>
+                      لعرض المحتوى بأعلى جودة أو في حال عدم ظهوره، استخدم زر <strong style={{ color: "#4ade80" }}>&ldquo;فتح خارجياً&rdquo;</strong> في الأعلى
+                    </span>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "0.5rem", overflow: "auto" }}>
+                    <img
+                      src={activeViewerItem.url}
+                      alt={activeViewerItem.title}
+                      style={{ maxWidth: "100%", maxHeight: "65vh", borderRadius: "16px", objectFit: "contain" }}
+                    />
+                  </div>
                 </div>
               )}
             </div>

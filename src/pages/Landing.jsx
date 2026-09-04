@@ -1,7 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Landing() {
+  const { currentUser } = useAuth();
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم د. محمود جاد، أود الاستفسار بخصوص منصة الدكتور فى الرياضيات");
   const facebookUrl = "https://web.facebook.com/dr.mathee/";
   const messengerUrl = "https://m.me/dr.mathee";

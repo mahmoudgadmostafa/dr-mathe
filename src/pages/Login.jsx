@@ -1,11 +1,13 @@
-// src/pages/Login.jsx
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import GradeSelectionModal from "../components/GradeSelectionModal";
 
 export default function Login() {
-  const { login, signInWithGoogle, completeGoogleStudentProfile } = useAuth();
+  const { login, signInWithGoogle, completeGoogleStudentProfile, currentUser } = useAuth();
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,6 +1,5 @@
-// src/pages/TeacherRegister.jsx
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const GRADES = [
@@ -11,7 +10,10 @@ const GRADES = [
 ];
 
 export default function TeacherRegister() {
-  const { registerTeacher } = useAuth();
+  const { registerTeacher, currentUser } = useAuth();
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const navigate = useNavigate();
   const [form, setForm] = useState({
     fullName: "",

@@ -14,25 +14,91 @@ import { auth, db } from "../firebase";
 
 const AuthContext = createContext(null);
 
+// دوال مساعدة لحفظ واستعادة الجلسة في localStorage لضمان بقاء المعلم أو الطالب مسجلاً دخوله عند تحديث الصفحة أو إغلاق الموقع
+export const SESSION_KEYS = {
+  UID: "math_app_user_uid",
+  PROFILE: "math_app_user_profile",
+  USER: "math_app_current_user",
+};
+
+export const saveSession = (uid, profileData, userObj) => {
+  try {
+    if (uid) localStorage.setItem(SESSION_KEYS.UID, uid);
+    if (profileData) localStorage.setItem(SESSION_KEYS.PROFILE, JSON.stringify(profileData));
+    if (userObj || profileData) {
+      const safeUser = {
+        uid: uid || userObj?.uid,
+        email: userObj?.email || profileData?.email || "",
+        displayName: userObj?.displayName || profileData?.fullName || "",
+        ...(profileData || {}),
+      };
+      localStorage.setItem(SESSION_KEYS.USER, JSON.stringify(safeUser));
+    }
+  } catch (e) {
+    console.error("Error saving session to localStorage:", e);
+  }
+};
+
+export const clearSession = () => {
+  try {
+    localStorage.removeItem(SESSION_KEYS.UID);
+    localStorage.removeItem(SESSION_KEYS.PROFILE);
+    localStorage.removeItem(SESSION_KEYS.USER);
+  } catch (e) {
+    console.error("Error clearing session from localStorage:", e);
+  }
+};
+
+export const getInitialStoredSession = () => {
+  try {
+    const uid = localStorage.getItem(SESSION_KEYS.UID);
+    if (!uid) return { user: null, profile: null };
+
+    const rawProfile = localStorage.getItem(SESSION_KEYS.PROFILE);
+    const profile = rawProfile ? JSON.parse(rawProfile) : null;
+
+    const rawUser = localStorage.getItem(SESSION_KEYS.USER);
+    let user = rawUser ? JSON.parse(rawUser) : null;
+
+    if (!user && profile) {
+      user = { uid, email: profile.email, displayName: profile.fullName, ...profile };
+    }
+    return { user, profile };
+  } catch (e) {
+    console.error("Error reading initial stored session:", e);
+    return { user: null, profile: null };
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null); // كائن المستخدم
-  const [userProfile, setUserProfile] = useState(null); // مستند users/{uid} في Firestore
-  const [loading, setLoading] = useState(true);
+  const initialSession = getInitialStoredSession();
+  const [currentUser, setCurrentUser] = useState(initialSession.user); // كائن المستخدم
+  const [userProfile, setUserProfile] = useState(initialSession.profile); // مستند users/{uid} في Firestore
+  const [loading, setLoading] = useState(!initialSession.user);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setCurrentUser(user);
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          setUserProfile(data);
-          localStorage.setItem("math_app_user_uid", user.uid);
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+            setUserProfile(data);
+            setCurrentUser(user);
+            saveSession(user.uid, data, user);
+          } else {
+            clearSession();
+            setCurrentUser(null);
+            setUserProfile(null);
+          }
+        } catch (e) {
+          console.warn("Error fetching user profile from Firestore (keeping cached session):", e);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       } else {
         // Fallback: Check if there is an active custom passcode session in localStorage
-        const savedUid = localStorage.getItem("math_app_user_uid");
+        const savedUid = localStorage.getItem(SESSION_KEYS.UID);
         if (savedUid) {
           try {
             const snap = await getDoc(doc(db, "users", savedUid));
@@ -41,21 +107,23 @@ export function AuthProvider({ children }) {
               const simulatedUser = { uid: savedUid, email: data.email, displayName: data.fullName, ...data };
               setUserProfile(data);
               setCurrentUser(simulatedUser);
+              saveSession(savedUid, data, simulatedUser);
             } else {
-              localStorage.removeItem("math_app_user_uid");
+              clearSession();
               setCurrentUser(null);
               setUserProfile(null);
             }
           } catch (e) {
-            console.error("Error restoring custom session:", e);
-            setCurrentUser(null);
-            setUserProfile(null);
+            console.warn("Error restoring custom session from Firestore (keeping cached session):", e);
+          } finally {
+            setLoading(false);
           }
         } else {
+          clearSession();
           setCurrentUser(null);
           setUserProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     });
     return unsubscribe;
@@ -97,8 +165,10 @@ export function AuthProvider({ children }) {
         createdAt: serverTimestamp(),
       });
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      setUserProfile(snap.data());
-      localStorage.setItem("math_app_user_uid", cred.user.uid);
+      const data = snap.data();
+      setUserProfile(data);
+      setCurrentUser(cred.user);
+      saveSession(cred.user.uid, data, cred.user);
     } catch (e) {
       console.error('Failed to create student profile:', e);
       throw e;
@@ -131,8 +201,10 @@ export function AuthProvider({ children }) {
         createdAt: serverTimestamp(),
       });
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      setUserProfile(snap.data());
-      localStorage.setItem("math_app_user_uid", cred.user.uid);
+      const data = snap.data();
+      setUserProfile(data);
+      setCurrentUser(cred.user);
+      saveSession(cred.user.uid, data, cred.user);
     } catch (e) {
       console.error('Failed to create teacher profile:', e);
       throw e;
@@ -153,12 +225,13 @@ export function AuthProvider({ children }) {
       try {
         const cred = await signInWithEmailAndPassword(auth, input, secret);
         if (cred.user) {
-          localStorage.setItem("math_app_user_uid", cred.user.uid);
           const userRef = doc(db, "users", cred.user.uid);
           const snap = await getDoc(userRef);
           if (snap.exists()) {
             const data = snap.data();
             setUserProfile(data);
+            setCurrentUser(cred.user);
+            saveSession(cred.user.uid, data, cred.user);
             // Backfill passcode fields in Firestore if missing
             if (!data.passcode && !data.password) {
               updateDoc(userRef, {
@@ -179,6 +252,8 @@ export function AuthProvider({ children }) {
             };
             await setDoc(userRef, newProf);
             setUserProfile(newProf);
+            setCurrentUser(cred.user);
+            saveSession(cred.user.uid, newProf, cred.user);
           }
           return cred.user;
         }
@@ -226,9 +301,9 @@ export function AuthProvider({ children }) {
           }
         }
         
-        localStorage.setItem("math_app_user_uid", userId);
         setUserProfile(userData);
         setCurrentUser(fullUser);
+        saveSession(userId, userData, fullUser);
         return fullUser;
       }
     }
@@ -274,12 +349,14 @@ export function AuthProvider({ children }) {
       };
       await setDoc(userRef, newUserData);
       setUserProfile(newUserData);
-      localStorage.setItem("math_app_user_uid", user.uid);
+      setCurrentUser(user);
+      saveSession(user.uid, newUserData, user);
       return { needsGrade: false, user, userProfile: newUserData };
     } else {
       const data = snap.data();
       setUserProfile(data);
-      localStorage.setItem("math_app_user_uid", user.uid);
+      setCurrentUser(user);
+      saveSession(user.uid, data, user);
 
       if (data.role === "student" && !data.grade) {
         return { needsGrade: true, user, isNew: false, userProfile: data };
@@ -314,15 +391,34 @@ export function AuthProvider({ children }) {
       updatedData = updatedSnap.data();
     }
     setUserProfile(updatedData);
-    localStorage.setItem("math_app_user_uid", user.uid);
+    setCurrentUser(user);
+    saveSession(user.uid, updatedData, user);
     return updatedData;
   }
 
   async function logout() {
-    localStorage.removeItem("math_app_user_uid");
+    clearSession();
     setCurrentUser(null);
     setUserProfile(null);
     return signOut(auth);
+  }
+
+  // تحديث البيانات يدويًا عند الحاجة (مثل بعد تعديل الملف الشخصي)
+  async function refreshUserProfile(targetUid) {
+    const uid = targetUid || currentUser?.uid || localStorage.getItem(SESSION_KEYS.UID);
+    if (!uid) return null;
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        setUserProfile(data);
+        saveSession(uid, data, currentUser);
+        return data;
+      }
+    } catch (e) {
+      console.warn("Error refreshing user profile:", e);
+    }
+    return null;
   }
 
   const value = {
@@ -337,6 +433,7 @@ export function AuthProvider({ children }) {
     loading,
     signInWithGoogle,
     completeGoogleStudentProfile,
+    refreshUserProfile,
   };
 
   if (loading) {

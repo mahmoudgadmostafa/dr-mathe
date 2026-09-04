@@ -1,6 +1,5 @@
-// src/pages/Register.jsx
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import GradeSelectionModal from "../components/GradeSelectionModal";
 
@@ -12,7 +11,10 @@ const GRADES = [
 ];
 
 export default function Register() {
-  const { registerStudent, signInWithGoogle, completeGoogleStudentProfile } = useAuth();
+  const { registerStudent, signInWithGoogle, completeGoogleStudentProfile, currentUser } = useAuth();
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", grade: GRADES[0], password: "" });

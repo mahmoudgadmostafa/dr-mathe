@@ -164,7 +164,7 @@ function StudentReportModal({ student, onClose }) {
       "📝 الاختبارات والواجبات المنجزة: " + totalQuizzes + " اختبارات (نسبة النجاح " + (totalQuizzes > 0 ? Math.round((passedQuizzes / totalQuizzes) * 100) : 0) + "%)",
       "📡 حضور الحصص المباشرة: " + liveJoinsCount + " حصة",
       "🎥 مشاهدة فيديوهات الشرح: " + videoViewsCount + " فيديو",
-      "📄 الاطلاع على الملخصات والإنفوجرافيك: " + (pdfViewsCount + infographicViewsCount) + " ملف",
+      "📄 الاطلاع على الملازم والشروحات والمحتويات الأخرى: " + (pdfViewsCount + infographicViewsCount) + " ملف",
       daysLeft !== null ? "📆 ينتهي الاشتراك في: " + formatDateAr(student.subscribedUntil) : "",
       "━━━━━━━━━━━━━━━━",
       "منصة الدكتور في الرياضيات 📐"
@@ -302,12 +302,12 @@ function StudentReportModal({ student, onClose }) {
             <div style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.25)", padding: "0.6rem", borderRadius: "12px", textAlign: "center" }}>
               <div style={{ fontSize: "1.3rem" }}>📄</div>
               <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#38bdf8" }}>{pdfViewsCount}</div>
-              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>ملخصات PDF</div>
+              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>ملازم وشروحات</div>
             </div>
             <div style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", padding: "0.6rem", borderRadius: "12px", textAlign: "center" }}>
               <div style={{ fontSize: "1.3rem" }}>🖼️</div>
               <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#c084fc" }}>{infographicViewsCount}</div>
-              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>إنفوجرافيك</div>
+              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>محتويات أخرى</div>
             </div>
           </div>
 

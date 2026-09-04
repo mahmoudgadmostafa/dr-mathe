@@ -64,16 +64,26 @@ function SupportRoute() {
     : <Navigate to="/dashboard?tab=support" replace />;
 }
 
+// إذا كان المعلم أو الطالب مسجلاً دخوله، يوجَّه تلقائياً لصفحته الرئيسية (لوحة التحكم) بدلاً من صفحات الهبوط أو تسجيل الدخول
+function PublicOnlyRoute({ children }) {
+  const { currentUser, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/"                element={<Layout><Landing /></Layout>} />
-            <Route path="/login"           element={<Layout><Login /></Layout>} />
-            <Route path="/register"        element={<Layout><Register /></Layout>} />
-            <Route path="/register-teacher" element={<Layout><TeacherRegister /></Layout>} />
+            <Route path="/"                element={<PublicOnlyRoute><Layout><Landing /></Layout></PublicOnlyRoute>} />
+            <Route path="/login"           element={<PublicOnlyRoute><Layout><Login /></Layout></PublicOnlyRoute>} />
+            <Route path="/register"        element={<PublicOnlyRoute><Layout><Register /></Layout></PublicOnlyRoute>} />
+            <Route path="/register-teacher" element={<PublicOnlyRoute><Layout><TeacherRegister /></Layout></PublicOnlyRoute>} />
             <Route path="/students"        element={<Layout><ProtectedRoute><TeacherStudents /></ProtectedRoute></Layout>} />
             <Route path="/students/add"    element={<Layout><ProtectedRoute><TeacherAddStudent /></ProtectedRoute></Layout>} />
             <Route path="/groups"          element={<Layout><ProtectedRoute><TeacherGroups /></ProtectedRoute></Layout>} />
@@ -86,6 +96,7 @@ export default function App() {
             <Route path="/notifications"   element={<Layout><ProtectedRoute><NotificationsRoute /></ProtectedRoute></Layout>} />
             <Route path="/support-tickets" element={<Layout><ProtectedRoute><SupportRoute /></ProtectedRoute></Layout>} />
             <Route path="/dashboard"       element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} />
+            <Route path="*"                element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </AuthProvider>

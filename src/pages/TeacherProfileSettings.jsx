@@ -6,7 +6,7 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
 
 export default function TeacherProfileSettings() {
-  const { currentUser, userProfile, isTeacher } = useAuth();
+  const { currentUser, userProfile, isTeacher, refreshUserProfile } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -80,6 +80,10 @@ export default function TeacherProfileSettings() {
         setPasscode(finalPasscode);
         setNewPasscode("");
         setConfirmPasscode("");
+      }
+
+      if (refreshUserProfile) {
+        await refreshUserProfile(currentUser?.uid);
       }
 
       setSuccessMsg("تم حفظ وتحديث بيانات المعلم والرقم السري بنجاح! 💾✨");

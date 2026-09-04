@@ -32,8 +32,8 @@ const GROUPS = [
 
 const RESOURCE_TYPES = [
   { id: "video", label: "🎬 فيديو شرح (Embed Player)", icon: "🎬", color: "#0ea5e9" },
-  { id: "pdf", label: "📄 ملخص PDF (PDF Viewer)", icon: "📄", color: "#ef4444" },
-  { id: "infographic", label: "🖼️ إنفوجرافيك ومخطط (Infographic)", icon: "🖼️", color: "#8b5cf6" },
+  { id: "pdf", label: "📄 ملازم وشروحات (PDF Viewer)", icon: "📄", color: "#ef4444" },
+  { id: "infographic", label: "🖼️ محتويات أخرى (Infographic)", icon: "🖼️", color: "#8b5cf6" },
 ];
 
 // Helper to get embeddable iframe URL for Youtube & Google Drive
@@ -339,7 +339,7 @@ export default function TeacherLibrary() {
               <span className="text-gradient">المكتبة التعليمية والشروحات</span> 🎬📄🖼️
             </h1>
             <p className="dashboard-role">
-              إضافة فيديوهات الشرح، ملخصات PDF، والإنفوجرافيك التفاعلي لكل صف ومجموعة
+              إضافة فيديوهات الشرح، ملازم وشروحات PDF، والمحتويات الأخرى لكل صف ومجموعة
             </p>
           </div>
         </div>
@@ -351,7 +351,7 @@ export default function TeacherLibrary() {
             + إضافة ملف PDF 📄
           </button>
           <button onClick={() => openAddModal("infographic")} className="button button-muted button-sm">
-            + إضافة إنفوجرافيك 🖼️
+            + إضافة محتوى آخر 🖼️
           </button>
         </div>
       </div>
@@ -462,10 +462,10 @@ export default function TeacherLibrary() {
               🎬 {filteredItems.filter((i) => i.type === "video").length} فيديو
             </span>
             <span style={{ background: "rgba(239,68,68,0.18)", color: "#fca5a5", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(239,68,68,0.3)" }}>
-              📄 {filteredItems.filter((i) => i.type === "pdf").length} PDF
+              📄 {filteredItems.filter((i) => i.type === "pdf").length} ملازم وشروحات
             </span>
             <span style={{ background: "rgba(34,197,94,0.18)", color: "#86efac", padding: "0.2rem 0.6rem", borderRadius: "8px", fontWeight: 800, border: "1px solid rgba(34,197,94,0.3)" }}>
-              🖼️ {filteredItems.filter((i) => i.type === "infographic").length} إنفوجرافيك
+              🖼️ {filteredItems.filter((i) => i.type === "infographic").length} محتويات أخرى
             </span>
           </div>
         </div>
@@ -495,14 +495,14 @@ export default function TeacherLibrary() {
               className={`button button-sm ${typeFilter === "pdf" ? "button-primary" : "button-muted"}`}
               style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
-              📄 ملازم PDF ({counts.pdf})
+              📄 ملازم وشروحات ({counts.pdf})
             </button>
             <button
               onClick={() => setTypeFilter("infographic")}
               className={`button button-sm ${typeFilter === "infographic" ? "button-primary" : "button-muted"}`}
               style={{ fontSize: "0.84rem", fontWeight: 800, borderRadius: "10px" }}
             >
-              🖼️ إنفوجرافيك ({counts.infographic})
+              🖼️ محتويات أخرى ({counts.infographic})
             </button>
           </div>
 
@@ -642,12 +642,12 @@ export default function TeacherLibrary() {
                       )}
                       {lesson.pdfs.length > 0 && (
                         <span style={{ background: "rgba(239, 68, 68, 0.18)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.3)", fontSize: "0.74rem", fontWeight: 800, padding: "0.15rem 0.5rem", borderRadius: "8px" }}>
-                          📄 {lesson.pdfs.length} PDF
+                          📄 {lesson.pdfs.length} ملازم وشروحات
                         </span>
                       )}
                       {lesson.infographics.length > 0 && (
                         <span style={{ background: "rgba(34, 197, 94, 0.18)", color: "#86efac", border: "1px solid rgba(34, 197, 94, 0.3)", fontSize: "0.74rem", fontWeight: 800, padding: "0.15rem 0.5rem", borderRadius: "8px" }}>
-                          🖼️ {lesson.infographics.length} إنفوجرافيك
+                          🖼️ {lesson.infographics.length} محتويات أخرى
                         </span>
                       )}
                     </div>
@@ -715,8 +715,8 @@ export default function TeacherLibrary() {
                       const accent = isVideo
                         ? { bg: "rgba(14,165,233,0.1)", border: "rgba(14,165,233,0.28)", tag: "#38bdf8", tagBg: "rgba(14,165,233,0.18)", icon: "🎬", label: "فيديو" }
                         : isPdf
-                        ? { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)", tag: "#f87171", tagBg: "rgba(239,68,68,0.18)", icon: "📄", label: "PDF" }
-                        : { bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.25)", tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)", icon: "🖼️", label: "إنفوجرافيك" };
+                        ? { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)", tag: "#f87171", tagBg: "rgba(239,68,68,0.18)", icon: "📄", label: "ملازم وشروحات" }
+                        : { bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.25)", tag: "#4ade80", tagBg: "rgba(34,197,94,0.18)", icon: "🖼️", label: "محتويات أخرى" };
 
                       const prevItem = lesson.allItems[itemIdx - 1];
                       const typeChanged = itemIdx > 0 && prevItem.type !== item.type;
@@ -1034,13 +1034,47 @@ export default function TeacherLibrary() {
                   🎓 {previewItem.grade} | 👥 {previewItem.group}
                 </span>
               </div>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="button button-sm button-muted"
-                style={{ fontSize: "1.2rem", padding: "0.2rem 0.6rem" }}
-              >
-                ✕
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                {(previewItem.type === "pdf" || previewItem.type === "infographic") && (
+                  <a
+                    href={previewItem.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="فتح في نافذة خارجية جديدة"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      background: previewItem.type === "pdf"
+                        ? "linear-gradient(135deg, #ef4444, #b91c1c)"
+                        : "linear-gradient(135deg, #22c55e, #15803d)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontSize: "0.8rem",
+                      padding: "0.4rem 0.9rem",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      boxShadow: previewItem.type === "pdf"
+                        ? "0 4px 14px rgba(239,68,68,0.4)"
+                        : "0 4px 14px rgba(34,197,94,0.4)",
+                      transition: "all 0.2s ease",
+                      whiteSpace: "nowrap",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.filter = "brightness(1.15)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.filter = "brightness(1)"; }}
+                  >
+                    <span style={{ fontSize: "0.95rem" }}>↗</span>
+                    فتح خارجياً
+                  </a>
+                )}
+                <button
+                  onClick={() => setPreviewItem(null)}
+                  className="button button-sm button-muted"
+                  style={{ fontSize: "1.2rem", padding: "0.2rem 0.6rem" }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Embedded Body Container */}
@@ -1058,22 +1092,57 @@ export default function TeacherLibrary() {
               )}
 
               {previewItem.type === "pdf" && (
-                <div style={{ width: "100%", height: "65vh", borderRadius: "var(--radius-md)", overflow: "hidden", background: "#1e293b" }}>
-                  <iframe
-                    src={previewItem.embedUrl || previewItem.url}
-                    title={previewItem.title}
-                    style={{ width: "100%", height: "100%", border: 0 }}
-                  />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", width: "100%", height: "65vh" }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    background: "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(15,23,42,0.9))",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    borderRadius: "12px",
+                    padding: "0.5rem 1rem",
+                    flexWrap: "wrap",
+                    flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: "1rem" }}>⚠️</span>
+                    <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontWeight: 600, flex: 1 }}>
+                      إذا لم يظهر الملف داخل العارض، استخدم زر <strong style={{ color: "#f87171" }}>&ldquo;فتح خارجياً&rdquo;</strong> في الأعلى لعرضه في نافذة مستقلة
+                    </span>
+                  </div>
+                  <div style={{ flex: 1, borderRadius: "var(--radius-md)", overflow: "hidden", background: "#1e293b" }}>
+                    <iframe
+                      src={previewItem.embedUrl || previewItem.url}
+                      title={previewItem.title}
+                      style={{ width: "100%", height: "100%", border: 0 }}
+                    />
+                  </div>
                 </div>
               )}
 
               {previewItem.type === "infographic" && (
-                <div style={{ textAlign: "center", width: "100%", maxHeight: "70vh", overflow: "auto" }}>
-                  <img
-                    src={previewItem.url}
-                    alt={previewItem.title}
-                    style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: "var(--radius-md)" }}
-                  />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", width: "100%" }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(15,23,42,0.9))",
+                    border: "1px solid rgba(34,197,94,0.2)",
+                    borderRadius: "12px",
+                    padding: "0.5rem 1rem",
+                    flexWrap: "wrap",
+                  }}>
+                    <span style={{ fontSize: "1rem" }}>💡</span>
+                    <span style={{ fontSize: "0.8rem", color: "#86efac", fontWeight: 600, flex: 1 }}>
+                      لعرض المحتوى بأعلى جودة أو في حال عدم ظهوره، استخدم زر <strong style={{ color: "#4ade80" }}>&ldquo;فتح خارجياً&rdquo;</strong> في الأعلى
+                    </span>
+                  </div>
+                  <div style={{ textAlign: "center", width: "100%", maxHeight: "70vh", overflow: "auto" }}>
+                    <img
+                      src={previewItem.url}
+                      alt={previewItem.title}
+                      style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: "var(--radius-md)" }}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -1085,16 +1154,7 @@ export default function TeacherLibrary() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{ padding: "0.75rem 1.5rem", background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <a
-                href={previewItem.url}
-                target="_blank"
-                rel="noreferrer"
-                className="button button-sm button-muted"
-                style={{ fontSize: "0.85rem" }}
-              >
-                🔗 فتح في نافذة خارجية جديدة
-              </a>
+            <div style={{ padding: "0.75rem 1.5rem", background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
               <button
                 onClick={() => setPreviewItem(null)}
                 className="button button-sm button-primary"

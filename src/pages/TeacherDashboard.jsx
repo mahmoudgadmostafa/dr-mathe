@@ -79,7 +79,7 @@ export default function TeacherDashboard() {
     { href: "/profile", icon: "⚙️", label: "تعديل بيانات المعلم والرقم السري" },
     { href: "/reports", icon: "📊", label: "تقارير الطلاب" },
     { href: "/quizzes", icon: "📝", label: "الاختبارات والتطبيقات الذكية والنتائج" },
-    { href: "/library", icon: "📚", label: "المكتبة والشروحات (فيديو/PDF/إنفوجرافيك)" },
+    { href: "/library", icon: "📚", label: "المكتبة والشروحات (فيديو / ملازم وشروحات / محتويات أخرى)" },
     { href: "/live-sessions", icon: "📡", label: "الحصص المباشرة والافتراضية" },
     { href: "/groups", icon: "🏫", label: "تنظيم المراحل والمجموعات" },
     { href: "/students", icon: "👥", label: "إدارة الطلاب والاشتراكات" },
