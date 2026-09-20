@@ -7,8 +7,8 @@ export default function FloatingContactWidget() {
   const widgetRef = useRef(null);
 
   const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم د. محمود جاد، أود الاستفسار بخصوص منصة الدكتور فى الرياضيات");
-  const facebookUrl = "https://web.facebook.com/dr.mathee/";
-  const messengerUrl = "https://m.me/dr.mathee";
+  const facebookUrl = "https://web.facebook.com/Dr.mathe83";
+  const messengerUrl = "https://m.me/Dr.mathe83";
 
   // Close on click outside or Escape
   useEffect(() => {
