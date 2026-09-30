@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Card from "./Card";
 import Avatar from "./Avatar";
+import StudentFinancialLedgerModal from "./StudentFinancialLedgerModal";
 import { db } from "../firebase";
 import { doc, updateDoc, getDoc, Timestamp, serverTimestamp, addDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 
@@ -1208,142 +1209,15 @@ export default function StudentCard({ student, onUpdateSuccess, onDeleteSuccess,
         document.body
       )}
 
-      {/* 📜 Student Payment Ledger Modal */}
-      {showLedgerModal && createPortal(
-        <div
-          className="modal-overlay-fix fade-in"
-          onClick={(e) => e.target === e.currentTarget && setShowLedgerModal(false)}
-        >
-          <div
-            className="modal-card-fix"
-            style={{
-              background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-              maxWidth: "600px",
-              border: "1px solid rgba(16, 185, 129, 0.45)",
-              color: "#e2e8f0"
-            }}
-          >
-            {/* Pinned Header */}
-            <div className="modal-header-pinned" style={{ background: "linear-gradient(90deg, #059669, #047857)" }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#fff" }}>
-                  📜 سجل مدفوعات واشتراكات الطالب
-                </h3>
-                <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.82rem", color: "rgba(255,255,255,0.85)" }}>
-                  {fullName} — {grade || "الصف غير محدد"}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowLedgerModal(false)}
-                title="إغلاق النافذة"
-                style={{
-                  background: "rgba(255,255,255,0.2)",
-                  border: "none",
-                  color: "#fff",
-                  width: 34, height: 34,
-                  borderRadius: "50%",
-                  cursor: "pointer",
-                  fontSize: "1.1rem",
-                  fontWeight: 800,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "background 0.2s"
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Scrollable Content Body */}
-            <div className="modal-body-scroll">
-              {loadingLedger ? (
-                <p style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>جاري تحميل سجل المدفوعات...</p>
-              ) : ledgerTransactions.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
-                  <p style={{ fontSize: "3rem", margin: "0 0 0.5rem" }}>💬</p>
-                  <p style={{ color: "#94a3b8", fontSize: "0.95rem" }}>لا توجد حركات مالية مسجلة لهذا الطالب حتى الآن.</p>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  {ledgerTransactions.map((tx) => {
-                    let txDate = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date(tx.createdAt || Date.now());
-                    const dateStr = txDate.toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
-                    return (
-                      <div key={tx.id} style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "0.85rem 1rem",
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: "14px",
-                        flexWrap: "wrap",
-                        gap: "0.5rem"
-                      }}>
-                        <div>
-                          <div style={{ fontWeight: "800", color: "#e2e8f0", fontSize: "0.9rem" }}>{tx.title}</div>
-                          <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: "0.2rem" }}>
-                            {tx.paymentMethodLabel || "نقدي"} • {dateStr}
-                            {tx.notes && <span> • {tx.notes}</span>}
-                          </div>
-                        </div>
-                        <span style={{
-                          fontWeight: "900",
-                          fontSize: "0.95rem",
-                          color: "#4ade80",
-                          background: "rgba(74, 222, 128, 0.12)",
-                          padding: "0.3rem 0.8rem",
-                          borderRadius: "20px",
-                          border: "1px solid rgba(74, 222, 128, 0.25)"
-                        }}>
-                          + {Number(tx.amount).toLocaleString()} ج.م
-                        </span>
-                      </div>
-                    );
-                  })}
-                  <div style={{
-                    background: "rgba(16, 185, 129, 0.12)",
-                    border: "1.5px solid rgba(16, 185, 129, 0.3)",
-                    borderRadius: "16px",
-                    padding: "0.9rem 1.2rem",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: "0.5rem"
-                  }}>
-                    <span style={{ fontWeight: "800", color: "#4ade80" }}>💰 إجمالي مدفوعات الطالب:</span>
-                    <span style={{ fontWeight: "900", fontSize: "1.2rem", color: "#4ade80" }}>
-                      {ledgerTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0).toLocaleString()} ج.م
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Pinned Footer */}
-            <div className="modal-footer-pinned">
-              <button
-                type="button"
-                onClick={() => setShowLedgerModal(false)}
-                style={{
-                  padding: "0.65rem 1.25rem",
-                  fontSize: "0.88rem",
-                  fontWeight: 700,
-                  borderRadius: "30px",
-                  background: "rgba(255, 255, 255, 0.1)",
-                  color: "#f1f5f9",
-                  border: "1.5px solid rgba(255, 255, 255, 0.2)",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.4rem"
-                }}
-              >
-                ↩️ إلغاء والعودة
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {/* 📜 Student Payment Ledger & Subscription Studio Modal */}
+      {showLedgerModal && (
+        <StudentFinancialLedgerModal
+          student={student}
+          onClose={() => setShowLedgerModal(false)}
+          onStudentUpdated={(updatedStudent) => {
+            if (onUpdateSuccess) onUpdateSuccess(student.id, updatedStudent.isSubscribed);
+          }}
+        />
       )}
 
       {/* 🗑️ Permanent Student Deletion Confirmation Modal */}

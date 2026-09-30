@@ -8,8 +8,8 @@ export default function Landing() {
     return <Navigate to="/dashboard" replace />;
   }
   const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم د. محمود جاد، أود الاستفسار بخصوص منصة الدكتور فى الرياضيات");
-  const facebookUrl = "https://web.facebook.com/Dr.mathe83";
-  const messengerUrl = "https://m.me/Dr.mathe83";
+  const facebookUrl = "https://web.facebook.com/dr.mathee/";
+  const messengerUrl = "https://m.me/dr.mathee";
 
   return (
     <div className="landing-page fade-in">

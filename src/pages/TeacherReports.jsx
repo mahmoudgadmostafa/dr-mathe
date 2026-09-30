@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import { getSubscriptionInfo } from "../components/StudentCard";
+import StudentFinancialLedgerModal from "../components/StudentFinancialLedgerModal";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function getSubscriptionDays(student) {
@@ -263,6 +264,7 @@ function StudentReportModal({ student, progress, onClose }) {
   const days = getSubscriptionDays(student);
   const gradeInfo = getGradeStage(student.grade);
   const [toastMessage, setToastMessage] = useState("");
+  const [showFinancialModal, setShowFinancialModal] = useState(false);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -591,6 +593,32 @@ function StudentReportModal({ student, progress, onClose }) {
                 <span style={{ fontWeight: 700, color: "#e2e8f0", fontSize: "0.85rem" }}>{value}</span>
               </div>
             ))}
+
+            {/* Direct Trigger to Financial Ledger & Subscription Management */}
+            <div style={{ marginTop: "0.85rem" }}>
+              <button
+                type="button"
+                onClick={() => setShowFinancialModal(true)}
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.45))",
+                  border: "1.5px solid #10b981",
+                  color: "#6ee7b7",
+                  padding: "0.65rem 1rem",
+                  borderRadius: "14px",
+                  fontWeight: 800,
+                  fontSize: "0.88rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  boxShadow: "0 4px 15px rgba(16, 185, 129, 0.2)",
+                }}
+              >
+                <span>💳</span> التحكم في السجل المالي والاشتراك (إضافة / تعديل / حذف)
+              </button>
+            </div>
           </div>
 
           {/* Footer */}
@@ -715,6 +743,14 @@ function StudentReportModal({ student, progress, onClose }) {
           </div>
         </div>
       </div>
+
+      {/* Student Financial Ledger Modal */}
+      {showFinancialModal && (
+        <StudentFinancialLedgerModal
+          student={student}
+          onClose={() => setShowFinancialModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -753,6 +789,7 @@ export default function TeacherReports() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("progress_desc");
   const [selectedStudentData, setSelectedStudentData] = useState(null);
+  const [ledgerStudent, setLedgerStudent] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
@@ -1423,15 +1460,35 @@ export default function TeacherReports() {
                               </span>
                             </td>
 
-                            {/* Action Button */}
+                            {/* Action Buttons */}
                             <td style={{ padding: "0.75rem 0.85rem", textAlign: "center" }}>
-                              <button
-                                onClick={() => setSelectedStudentData({ student: s, progress: p })}
-                                className="button button-sm button-primary"
-                                style={{ fontSize: "0.78rem", padding: "0.35rem 0.75rem", whiteSpace: "nowrap" }}
-                              >
-                                📊 تقرير الأداء الفعلي
-                              </button>
+                              <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", flexWrap: "wrap" }}>
+                                <button
+                                  onClick={() => setSelectedStudentData({ student: s, progress: p })}
+                                  className="button button-sm button-primary"
+                                  style={{ fontSize: "0.76rem", padding: "0.35rem 0.65rem", whiteSpace: "nowrap" }}
+                                >
+                                  📊 تقرير الأداء
+                                </button>
+                                <button
+                                  onClick={() => setLedgerStudent(s)}
+                                  className="button button-sm"
+                                  title="التحكم في السجل المالي والاشتراك (إضافة / تعديل / حذف)"
+                                  style={{
+                                    fontSize: "0.76rem",
+                                    padding: "0.35rem 0.65rem",
+                                    whiteSpace: "nowrap",
+                                    background: "rgba(16, 185, 129, 0.15)",
+                                    border: "1px solid #10b981",
+                                    color: "#6ee7b7",
+                                    cursor: "pointer",
+                                    borderRadius: "8px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  💳 السجل المالي
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1451,6 +1508,14 @@ export default function TeacherReports() {
           student={selectedStudentData.student}
           progress={selectedStudentData.progress}
           onClose={() => setSelectedStudentData(null)}
+        />
+      )}
+
+      {/* Individual Student Financial Ledger & Subscription Studio Modal */}
+      {ledgerStudent && (
+        <StudentFinancialLedgerModal
+          student={ledgerStudent}
+          onClose={() => setLedgerStudent(null)}
         />
       )}
     </div>

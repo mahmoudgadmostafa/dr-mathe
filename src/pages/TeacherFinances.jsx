@@ -3,8 +3,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { collection, query, where, onSnapshot, addDoc, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, orderBy, serverTimestamp } from "firebase/firestore";
 import { getSubscriptionInfo } from "../components/StudentCard";
+import StudentFinancialLedgerModal from "../components/StudentFinancialLedgerModal";
 
 const PAYMENT_METHODS = [
   { id: "cash", label: "💵 نقدي (كاش)", icon: "💵" },
@@ -50,6 +51,9 @@ export default function TeacherFinances() {
     notes: "",
   });
   const [savingTx, setSavingTx] = useState(false);
+  const [editingTx, setEditingTx] = useState(null);
+  const [savingEditTx, setSavingEditTx] = useState(false);
+  const [selectedStudentForLedger, setSelectedStudentForLedger] = useState(null);
 
   const isTeacher = userProfile?.role === "teacher";
 
@@ -188,6 +192,46 @@ export default function TeacherFinances() {
     }
   };
 
+  const handleUpdateTransaction = async (e) => {
+    e.preventDefault();
+    if (!editingTx) return;
+    const amountNum = Number(editingTx.amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      alert("يرجى كتابة مبلغ مالي صحيح.");
+      return;
+    }
+    setSavingEditTx(true);
+    try {
+      const methodObj = PAYMENT_METHODS.find((m) => m.id === editingTx.paymentMethod) || PAYMENT_METHODS[0];
+      await updateDoc(doc(db, "financial_transactions", editingTx.id), {
+        title: editingTx.title.trim(),
+        amount: amountNum,
+        type: editingTx.type,
+        category: editingTx.type === "expense" ? "expense" : "income",
+        paymentMethod: editingTx.paymentMethod,
+        paymentMethodLabel: methodObj.label,
+        notes: (editingTx.notes || "").trim(),
+        updatedAt: serverTimestamp(),
+      });
+      setEditingTx(null);
+    } catch (err) {
+      console.error("Error updating transaction:", err);
+      alert("حدث خطأ أثناء تعديل الحركة المالية.");
+    } finally {
+      setSavingEditTx(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (tx) => {
+    if (!window.confirm(`هل أنت متأكد من حذف هذه المعاملة المالية؟\n"${tx.title}" بقيمة ${Number(tx.amount).toLocaleString()} ج.م`)) return;
+    try {
+      await deleteDoc(doc(db, "financial_transactions", tx.id));
+    } catch (err) {
+      console.error("Error deleting transaction:", err);
+      alert("حدث خطأ أثناء حذف الحركة المالية.");
+    }
+  };
+
   const handlePrintReport = () => {
     window.print();
   };
@@ -322,6 +366,7 @@ export default function TeacherFinances() {
                     <th style={{ padding: "0.75rem 1rem", color: "#475569", fontSize: "0.88rem" }}>الطالب / الجهة</th>
                     <th style={{ padding: "0.75rem 1rem", color: "#475569", fontSize: "0.88rem" }}>طريقة الدفع</th>
                     <th style={{ padding: "0.75rem 1rem", color: "#475569", fontSize: "0.88rem" }}>المبلغ</th>
+                    <th style={{ padding: "0.75rem 1rem", color: "#475569", fontSize: "0.88rem", textAlign: "center" }}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -362,6 +407,63 @@ export default function TeacherFinances() {
                           }}>
                             {isIncome ? `+ ${Number(tx.amount).toLocaleString()} ج.م` : `- ${Number(tx.amount).toLocaleString()} ج.م`}
                           </span>
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
+                          <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+                            {tx.studentId && (
+                              <button
+                                onClick={() => {
+                                  const st = students.find((s) => s.id === tx.studentId) || { id: tx.studentId, fullName: tx.studentName, grade: tx.studentGrade };
+                                  setSelectedStudentForLedger(st);
+                                }}
+                                title="عرض وإدارة السجل المالي لاشتراك هذا الطالب"
+                                style={{
+                                  background: "rgba(16, 185, 129, 0.12)",
+                                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                                  color: "#059669",
+                                  borderRadius: "8px",
+                                  padding: "0.3rem 0.55rem",
+                                  cursor: "pointer",
+                                  fontSize: "0.78rem",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                💳 سجل الطالب
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setEditingTx({ ...tx })}
+                              title="تعديل هذه الحركة المالية"
+                              style={{
+                                background: "rgba(2, 132, 199, 0.12)",
+                                border: "1px solid rgba(2, 132, 199, 0.3)",
+                                color: "#0284c7",
+                                borderRadius: "8px",
+                                padding: "0.3rem 0.55rem",
+                                cursor: "pointer",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              ✏️ تعديل
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTransaction(tx)}
+                              title="حذف هذه الحركة المالية"
+                              style={{
+                                background: "rgba(239, 68, 68, 0.12)",
+                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                color: "#dc2626",
+                                borderRadius: "8px",
+                                padding: "0.3rem 0.55rem",
+                                cursor: "pointer",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              🗑️ حذف
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -480,6 +582,102 @@ export default function TeacherFinances() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Edit Transaction Modal */}
+      {editingTx && (
+        <div className="modal-overlay glass-backdrop fade-in" style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(15, 23, 42, 0.75)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "1rem"
+        }}>
+          <div className="modal-content glass" style={{
+            background: "#ffffff", padding: "2rem", borderRadius: "var(--radius-lg)",
+            maxWidth: "500px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.2)"
+          }}>
+            <h3 className="font-heading" style={{ margin: "0 0 1.25rem 0", fontSize: "1.3rem", color: "#0f172a" }}>
+              ✏️ تعديل الحركة المالية
+            </h3>
+
+            <form onSubmit={handleUpdateTransaction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">نوع الحركة المالية:</label>
+                <select
+                  className="form-input"
+                  value={editingTx.type}
+                  onChange={(e) => setEditingTx({ ...editingTx, type: e.target.value })}
+                >
+                  {TRANSACTION_TYPES.map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">بيان الحركة / العنوان:</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editingTx.title}
+                  onChange={(e) => setEditingTx({ ...editingTx, title: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">المبلغ (ج.م):</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={editingTx.amount}
+                  onChange={(e) => setEditingTx({ ...editingTx, amount: e.target.value })}
+                  min="0"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">طريقة الدفع:</label>
+                <select
+                  className="form-input"
+                  value={editingTx.paymentMethod}
+                  onChange={(e) => setEditingTx({ ...editingTx, paymentMethod: e.target.value })}
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">ملاحظات إضافية:</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editingTx.notes || ""}
+                  onChange={(e) => setEditingTx({ ...editingTx, notes: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                <button type="submit" disabled={savingEditTx} className="button button-primary" style={{ flex: 1 }}>
+                  {savingEditTx ? "جاري التحديث..." : "💾 حفظ التعديل"}
+                </button>
+                <button type="button" onClick={() => setEditingTx(null)} className="button button-muted">
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Student Financial Ledger Modal */}
+      {selectedStudentForLedger && (
+        <StudentFinancialLedgerModal
+          student={selectedStudentForLedger}
+          onClose={() => setSelectedStudentForLedger(null)}
+        />
       )}
     </div>
   );
