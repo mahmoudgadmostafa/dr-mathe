@@ -7,7 +7,7 @@ export default function Landing() {
   if (currentUser) {
     return <Navigate to="/dashboard" replace />;
   }
-  const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم د. محمود جاد، أود الاستفسار بخصوص منصة الدكتور فى الرياضيات");
+  const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم اهلا بك فى منصة الدكتور فى الرياضيات اترك استفسارك وسيتم الرد عليكم فى اقرب وقت ممكن ");
   const facebookUrl = "https://web.facebook.com/dr.mathee/";
   const messengerUrl = "https://m.me/dr.mathee";
 
