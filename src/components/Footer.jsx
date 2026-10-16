@@ -4,7 +4,7 @@ import React from "react";
 export default function Footer() {
   const whatsappUrl = "https://wa.me/201060607654?text=" + encodeURIComponent("السلام عليكم اهلا بك فى منصة الدكتور فى الرياضيات اترك استفسارك وسيتم الرد عليكم فى اقرب وقت ممكن ");
   const facebookUrl = "https://web.facebook.com/Dr.mathe83/";
-  const messengerUrl = "https://m.me/Dr.mathe83/";
+  const messengerUrl = "https://m.me/Dr.mathe83";
 
   return (
     <footer className="site-footer glass">
